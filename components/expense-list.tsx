@@ -30,7 +30,8 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
   const [editAmount, setEditAmount] = useState('')
   const [editAccountId, setEditAccountId] = useState('')
   const [editCategoryId, setEditCategoryId] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [isUpdating, startUpdateTransition] = useTransition()
+  const [isDeleting, startDeleteTransition] = useTransition()
 
   const openEdit = (expense: Expense) => {
     setEditingExpense(expense)
@@ -50,7 +51,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
       toast.error('올바른 금액을 입력해주세요')
       return
     }
-    startTransition(async () => {
+    startUpdateTransition(async () => {
       try {
         await updateExpense(editingExpense.id, {
           title: editTitle,
@@ -69,7 +70,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
 
   const handleDelete = (id: string) => {
     if (!confirm('이 지출 기록을 삭제하시겠습니까?')) return
-    startTransition(async () => {
+    startDeleteTransition(async () => {
       try {
         await deleteExpense(id)
         toast.success('지출이 삭제됐습니다')
@@ -112,7 +113,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => openEdit(expense)}>수정</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(expense.id)} disabled={isPending}>삭제</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(expense.id)} disabled={isDeleting}>삭제</Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -170,7 +171,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingExpense(null)}>취소</Button>
-            <Button onClick={handleUpdate} disabled={isPending}>저장</Button>
+            <Button onClick={handleUpdate} disabled={isUpdating}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

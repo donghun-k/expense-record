@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 
 export function MonthSelector({ currentMonth }: { currentMonth: string }) {
   const router = useRouter()
-  const current = new Date(`${currentMonth}-01`)
+  const [y, m] = currentMonth.split('-').map(Number)
+  const current = new Date(y, m - 1, 1)
 
   const go = (date: Date) => {
     router.push(`/history?month=${format(date, 'yyyy-MM')}`)
