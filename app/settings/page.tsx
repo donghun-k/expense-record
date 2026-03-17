@@ -1,13 +1,21 @@
+import { format, subMonths } from 'date-fns'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getAccounts } from '@/lib/actions/account'
 import { getCategories } from '@/lib/actions/category'
+import { getBudgetsByMonth } from '@/lib/actions/budget'
 import { AccountSettings } from '@/components/settings/account-settings'
 import { CategorySettings } from '@/components/settings/category-settings'
+import { BudgetSettings } from '@/components/settings/budget-settings'
 
 export default async function SettingsPage() {
-  const [accounts, categories] = await Promise.all([
+  const currentYearMonth = format(new Date(), 'yyyy-MM')
+  const prevYearMonth = format(subMonths(new Date(), 1), 'yyyy-MM')
+
+  const [accounts, categories, budgets, prevBudgets] = await Promise.all([
     getAccounts(),
     getCategories(),
+    getBudgetsByMonth(currentYearMonth),
+    getBudgetsByMonth(prevYearMonth),
   ])
 
   return (
@@ -26,7 +34,12 @@ export default async function SettingsPage() {
           <CategorySettings accounts={accounts} categories={categories} />
         </TabsContent>
         <TabsContent value="budgets" className="mt-4">
-          <p className="text-sm text-muted-foreground">다음 단계에서 추가됩니다.</p>
+          <BudgetSettings
+            categories={categories}
+            currentYearMonth={currentYearMonth}
+            budgets={budgets}
+            hasPreviousMonthBudget={prevBudgets.length > 0}
+          />
         </TabsContent>
       </Tabs>
     </div>
