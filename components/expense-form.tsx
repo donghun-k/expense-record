@@ -38,8 +38,13 @@ export function ExpenseForm({ accounts, categories }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || !amount || !accountId || !categoryId) {
+    const parsedAmount = parseInt(amount, 10)
+    if (!title.trim() || !accountId || !categoryId) {
       toast.error('모든 필드를 입력해주세요')
+      return
+    }
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error('올바른 금액을 입력해주세요')
       return
     }
 
@@ -47,7 +52,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
       try {
         await createExpense({
           title,
-          amount: parseInt(amount, 10),
+          amount: parsedAmount,
           date: format(date, 'yyyy-MM-dd'),
           accountId,
           categoryId,
@@ -119,9 +124,13 @@ export function ExpenseForm({ accounts, categories }: Props) {
                 <SelectValue placeholder={accountId ? '카테고리 선택' : '계좌를 먼저 선택하세요'} />
               </SelectTrigger>
               <SelectContent>
-                {filteredCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
+                {filteredCategories.length === 0 && accountId ? (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">등록된 카테고리가 없습니다</div>
+                ) : (
+                  filteredCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
