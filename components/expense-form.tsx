@@ -54,6 +54,8 @@ export function ExpenseForm({ accounts, categories }: Props) {
         })
         setTitle('')
         setAmount('')
+        setAccountId('')
+        setCategoryId('')
         setDate(new Date())
         toast.success('지출이 기록됐습니다')
       } catch (e: any) {
