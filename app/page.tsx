@@ -8,6 +8,8 @@ import { BudgetStatusCard } from '@/components/budget-status'
 import { calculateBudgetStatus, groupExpensesByCategory } from '@/lib/utils/budget'
 import type { BudgetStatus } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const currentYearMonth = format(new Date(), 'yyyy-MM')
 
@@ -20,15 +22,18 @@ export default async function HomePage() {
 
   const spentByCategory = groupExpensesByCategory(expenses)
 
-  const budgetStatuses: BudgetStatus[] = budgets.map((b) => {
-    const category = categories.find((c) => c.id === b.categoryId)
-    const spent = spentByCategory[b.categoryId] ?? 0
-    return {
-      categoryId: b.categoryId,
-      categoryName: category?.name ?? '',
-      ...calculateBudgetStatus(b.amount, spent),
-    }
-  })
+  const budgetStatuses: BudgetStatus[] = budgets
+    .map((b) => {
+      const category = categories.find((c) => c.id === b.categoryId)
+      if (!category) return null
+      const spent = spentByCategory[b.categoryId] ?? 0
+      return {
+        categoryId: b.categoryId,
+        categoryName: category.name,
+        ...calculateBudgetStatus(b.amount, spent),
+      }
+    })
+    .filter((s): s is BudgetStatus => s !== null)
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
