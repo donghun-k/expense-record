@@ -13,7 +13,7 @@ export async function createExpense(data: {
   categoryId: string
 }): Promise<void> {
   if (!data.title.trim()) throw new Error('사용처를 입력해주세요')
-  if (!data.amount || data.amount <= 0) throw new Error('금액을 입력해주세요')
+  if (data.amount <= 0) throw new Error('금액을 입력해주세요')
   if (!data.accountId) throw new Error('계좌를 선택해주세요')
   if (!data.categoryId) throw new Error('카테고리를 선택해주세요')
 
@@ -32,12 +32,13 @@ export async function createExpense(data: {
 }
 
 export async function getExpensesByMonth(yearMonth: string): Promise<Expense[]> {
+  if (!/^\d{4}-\d{2}$/.test(yearMonth)) throw new Error('잘못된 연월 형식입니다')
   const [year, month] = yearMonth.split('-').map(Number)
   const startDate = `${yearMonth}-01`
   // toISOString() 타임존 버그 방지: date-fns로 직접 포맷
   const endDate = format(addMonths(new Date(year, month - 1, 1), 1), 'yyyy-MM-dd')
 
-  const response = await notion.databases.query({
+  const response = await (notion.databases as any).query({
     database_id: DB.EXPENSE,
     filter: {
       and: [
@@ -84,8 +85,9 @@ export async function updateExpense(
   id: string,
   data: { title: string; amount: number; date: string; accountId: string; categoryId: string }
 ): Promise<void> {
+  if (!id) throw new Error('항목을 찾을 수 없습니다')
   if (!data.title.trim()) throw new Error('사용처를 입력해주세요')
-  if (!data.amount || data.amount <= 0) throw new Error('금액을 입력해주세요')
+  if (data.amount <= 0) throw new Error('금액을 입력해주세요')
   if (!data.accountId) throw new Error('계좌를 선택해주세요')
   if (!data.categoryId) throw new Error('카테고리를 선택해주세요')
 
@@ -104,6 +106,7 @@ export async function updateExpense(
 }
 
 export async function deleteExpense(id: string): Promise<void> {
+  if (!id) throw new Error('항목을 찾을 수 없습니다')
   await notion.pages.update({ page_id: id, in_trash: true })
   revalidatePath('/history')
   revalidatePath('/')
