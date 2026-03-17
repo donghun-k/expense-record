@@ -103,9 +103,13 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
               </TableCell>
             </TableRow>
           ) : (
-            expenses.map((expense) => (
+            expenses.map((expense) => {
+              // UTC 파싱 버그 방지: "YYYY-MM-DD" 문자열을 로컬 날짜로 파싱
+              const [ey, em, ed] = expense.date.split('-').map(Number)
+              const displayDate = format(new Date(ey, em - 1, ed), 'MM/dd', { locale: ko })
+              return (
               <TableRow key={expense.id}>
-                <TableCell>{format(new Date(expense.date), 'MM/dd', { locale: ko })}</TableCell>
+                <TableCell>{displayDate}</TableCell>
                 <TableCell>{expense.title}</TableCell>
                 <TableCell className="text-right">{expense.amount.toLocaleString()}원</TableCell>
                 <TableCell>{expense.accountName}</TableCell>
@@ -117,7 +121,8 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
                   </div>
                 </TableCell>
               </TableRow>
-            ))
+              )
+            })
           )}
         </TableBody>
       </Table>
