@@ -31,8 +31,8 @@ export function ExpenseForm({ accounts, categories }: Props) {
 
   const filteredCategories = categories.filter((c) => c.accountId === accountId)
 
-  const handleAccountChange = (value: string) => {
-    setAccountId(value)
+  const handleAccountChange = (value: string | null) => {
+    setAccountId(value ?? '')
     setCategoryId('')
   }
 
@@ -77,11 +77,14 @@ export function ExpenseForm({ accounts, categories }: Props) {
           <div className="space-y-1">
             <Label>날짜</Label>
             <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn('w-full justify-start', !date && 'text-muted-foreground')}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'yyyy년 MM월 dd일', { locale: ko }) : '날짜 선택'}
-                </Button>
+              <PopoverTrigger
+                className={cn(
+                  'flex h-9 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                  !date && 'text-muted-foreground'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, 'yyyy년 MM월 dd일', { locale: ko }) : '날짜 선택'}
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
@@ -119,7 +122,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
 
           <div className="space-y-1">
             <Label>카테고리</Label>
-            <Select value={categoryId} onValueChange={setCategoryId} disabled={!accountId}>
+            <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? '')} disabled={!accountId}>
               <SelectTrigger>
                 <SelectValue placeholder={accountId ? '카테고리 선택' : '계좌를 먼저 선택하세요'} />
               </SelectTrigger>

@@ -1,3 +1,6 @@
+// Notion API 호출이 있으므로 정적 사전 렌더링 비활성화
+export const dynamic = 'force-dynamic'
+
 import { format, subMonths } from 'date-fns'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getAccounts } from '@/lib/actions/account'
