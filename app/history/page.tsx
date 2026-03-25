@@ -19,16 +19,11 @@ export default async function HistoryPage({ searchParams }: Props) {
     getExpensesByMonth(yearMonth),
   ])
 
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0)
-
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">지출 내역</h1>
         <MonthSelector currentMonth={yearMonth} />
-      </div>
-      <div className="text-sm text-muted-foreground">
-        총 {expenses.length}건 · {total.toLocaleString()}원
       </div>
       <ExpenseList expenses={expenses} accounts={accounts} categories={categories} />
     </div>

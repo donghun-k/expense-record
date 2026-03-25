@@ -111,7 +111,12 @@ export function ExpenseForm({ accounts, categories }: Props) {
           <div className="space-y-1">
             <Label>계좌</Label>
             <Select value={accountId} onValueChange={handleAccountChange}>
-              <SelectTrigger><SelectValue placeholder="계좌 선택" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder="계좌 선택"
+                  label={accounts.find((a) => a.id === accountId)?.name}
+                />
+              </SelectTrigger>
               <SelectContent>
                 {accounts.map((a) => (
                   <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -124,7 +129,10 @@ export function ExpenseForm({ accounts, categories }: Props) {
             <Label>카테고리</Label>
             <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? '')} disabled={!accountId}>
               <SelectTrigger>
-                <SelectValue placeholder={accountId ? '카테고리 선택' : '계좌를 먼저 선택하세요'} />
+                <SelectValue
+                  placeholder={accountId ? '카테고리 선택' : '계좌를 먼저 선택하세요'}
+                  label={filteredCategories.find((c) => c.id === categoryId)?.name}
+                />
               </SelectTrigger>
               <SelectContent>
                 {filteredCategories.length === 0 && accountId ? (

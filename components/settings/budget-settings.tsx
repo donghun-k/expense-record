@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { format, subMonths } from 'date-fns'
+import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,16 +17,32 @@ interface Props {
   hasPreviousMonthBudget: boolean
 }
 
+function formatNumber(value: string): string {
+  const num = value.replace(/[^0-9]/g, '')
+  if (!num) return ''
+  return parseInt(num, 10).toLocaleString()
+}
+
+function parseNumber(formatted: string): string {
+  return formatted.replace(/,/g, '')
+}
+
 export function BudgetSettings({ categories, currentYearMonth, budgets, hasPreviousMonthBudget }: Props) {
   const [amounts, setAmounts] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
-    budgets.forEach((b) => { init[b.categoryId] = String(b.amount) })
+    budgets.forEach((b) => { init[b.categoryId] = b.amount.toLocaleString() })
     return init
   })
+  const [originalAmounts] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {}
+    budgets.forEach((b) => { init[b.categoryId] = b.amount.toLocaleString() })
+    return init
+  })
+  const [savedState, setSavedState] = useState<Record<string, 'saved' | 'dirty' | 'idle'>>({})
   const [isPending, startTransition] = useTransition()
 
   const handleSave = (categoryId: string, categoryName: string) => {
-    const amount = parseInt(amounts[categoryId] ?? '0', 10)
+    const amount = parseInt(parseNumber(amounts[categoryId] ?? '0'), 10)
     if (isNaN(amount) || amount < 0) {
       toast.error('올바른 금액을 입력해주세요')
       return
@@ -34,6 +51,7 @@ export function BudgetSettings({ categories, currentYearMonth, budgets, hasPrevi
       try {
         await upsertBudget(currentYearMonth, categoryId, amount, categoryName)
         toast.success('예산이 저장됐습니다')
+        setSavedState((prev) => ({ ...prev, [categoryId]: 'saved' }))
       } catch {
         toast.error('예산 저장에 실패했습니다')
       }
@@ -73,22 +91,43 @@ export function BudgetSettings({ categories, currentYearMonth, budgets, hasPrevi
         {categories.length === 0 ? (
           <p className="text-sm text-muted-foreground">카테고리를 먼저 추가해주세요.</p>
         ) : (
-          categories.map((category) => (
-            <div key={category.id} className="flex items-center gap-3">
-              <span className="w-32 text-sm">{category.name}</span>
-              <Input
-                type="number"
-                placeholder="0"
-                value={amounts[category.id] ?? ''}
-                onChange={(e) => setAmounts((prev) => ({ ...prev, [category.id]: e.target.value }))}
-                className="flex-1"
-                min="0"
-              />
-              <Button size="sm" onClick={() => handleSave(category.id, category.name)} disabled={isPending}>
-                저장
-              </Button>
-            </div>
-          ))
+          categories.map((category) => {
+            const state = savedState[category.id] ?? 'idle'
+            return (
+              <div key={category.id} className="flex items-center gap-3">
+                <span className="w-32 text-sm">{category.name}</span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={amounts[category.id] ?? ''}
+                  onChange={(e) => {
+                    const formatted = formatNumber(e.target.value)
+                    setAmounts((prev) => ({ ...prev, [category.id]: formatted }))
+                    setSavedState((prev) => ({
+                      ...prev,
+                      [category.id]: formatted === (originalAmounts[category.id] || '') ? 'idle' : 'dirty',
+                    }))
+                  }}
+                  className="flex-1"
+                />
+                {state === 'saved' ? (
+                  <Button size="sm" variant="outline" disabled className="text-green-600 border-green-600">
+                    <Check className="h-4 w-4 mr-1" />저장됨
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant={state === 'dirty' ? 'default' : 'outline'}
+                    onClick={() => handleSave(category.id, category.name)}
+                    disabled={isPending || state === 'idle'}
+                  >
+                    저장
+                  </Button>
+                )}
+              </div>
+            )
+          })
         )}
       </CardContent>
     </Card>

@@ -71,7 +71,10 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
           />
           <Select value={newAccountId} onValueChange={(v) => setNewAccountId(v ?? '')}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="계좌 선택" />
+              <SelectValue
+                placeholder="계좌 선택"
+                label={accounts.find((a) => a.id === newAccountId)?.name}
+              />
             </SelectTrigger>
             <SelectContent>
               {accounts.map((a) => (
@@ -90,7 +93,12 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
                   <>
                     <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} className="flex-1" />
                     <Select value={editingAccountId} onValueChange={(v) => setEditingAccountId(v ?? '')}>
-                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="w-40">
+                        <SelectValue
+                          placeholder="계좌 선택"
+                          label={accounts.find((a) => a.id === editingAccountId)?.name}
+                        />
+                      </SelectTrigger>
                       <SelectContent>
                         {accounts.map((a) => (
                           <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>

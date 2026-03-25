@@ -24,6 +24,8 @@ interface Props {
 }
 
 export function ExpenseList({ expenses, accounts, categories }: Props) {
+  const [filterAccountId, setFilterAccountId] = useState('')
+  const [filterCategoryId, setFilterCategoryId] = useState('')
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [editDate, setEditDate] = useState<Date>(new Date())
   const [editTitle, setEditTitle] = useState('')
@@ -82,8 +84,59 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
 
   const filteredCategories = categories.filter((c) => c.accountId === editAccountId)
 
+  const filteredExpenses = expenses.filter((e) => {
+    if (filterAccountId && e.accountId !== filterAccountId) return false
+    if (filterCategoryId && e.categoryId !== filterCategoryId) return false
+    return true
+  })
+  const filteredTotal = filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
+
   return (
     <>
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">계좌</span>
+          <Select value={filterAccountId} onValueChange={(v) => { setFilterAccountId(v ?? ''); setFilterCategoryId('') }}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="전체" label={filterAccountId ? accounts.find((a) => a.id === filterAccountId)?.name : undefined} />
+            </SelectTrigger>
+            <SelectContent>
+              {accounts.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filterAccountId && (
+            <Button variant="ghost" size="sm" onClick={() => { setFilterAccountId(''); setFilterCategoryId('') }}>
+              초기화
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">카테고리</span>
+          <Select value={filterCategoryId} onValueChange={(v) => setFilterCategoryId(v ?? '')}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="전체" label={filterCategoryId ? categories.find((c) => c.id === filterCategoryId)?.name : undefined} />
+            </SelectTrigger>
+            <SelectContent>
+              {(filterAccountId ? categories.filter((c) => c.accountId === filterAccountId) : categories).map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filterCategoryId && (
+            <Button variant="ghost" size="sm" onClick={() => setFilterCategoryId('')}>
+              초기화
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="text-sm text-muted-foreground mb-4">
+        {(filterAccountId || filterCategoryId)
+          ? `필터 결과: ${filteredExpenses.length}건 · ${filteredTotal.toLocaleString()}원 (전체 ${expenses.length}건 · ${expenses.reduce((s, e) => s + e.amount, 0).toLocaleString()}원)`
+          : `총 ${filteredExpenses.length}건 · ${filteredTotal.toLocaleString()}원`
+        }
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -96,14 +149,14 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenses.length === 0 ? (
+          {filteredExpenses.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                지출 기록이 없습니다
+                {(filterAccountId || filterCategoryId) ? '필터 조건에 맞는 기록이 없습니다' : '지출 기록이 없습니다'}
               </TableCell>
             </TableRow>
           ) : (
-            expenses.map((expense) => {
+            filteredExpenses.map((expense) => {
               // UTC 파싱 버그 방지: "YYYY-MM-DD" 문자열을 로컬 날짜로 파싱
               const [ey, em, ed] = expense.date.split('-').map(Number)
               const displayDate = format(new Date(ey, em - 1, ed), 'MM/dd', { locale: ko })
@@ -158,7 +211,12 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
             <div className="space-y-1">
               <Label>계좌</Label>
               <Select value={editAccountId} onValueChange={(v) => { setEditAccountId(v ?? ''); setEditCategoryId('') }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="계좌 선택"
+                    label={accounts.find((a) => a.id === editAccountId)?.name}
+                  />
+                </SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                 </SelectContent>
@@ -167,7 +225,12 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
             <div className="space-y-1">
               <Label>카테고리</Label>
               <Select value={editCategoryId} onValueChange={(v) => setEditCategoryId(v ?? '')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="카테고리 선택"
+                    label={filteredCategories.find((c) => c.id === editCategoryId)?.name}
+                  />
+                </SelectTrigger>
                 <SelectContent>
                   {filteredCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
