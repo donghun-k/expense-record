@@ -12,7 +12,7 @@ export function ThemeToggle() {
   useEffect(() => setMounted(true), [])
 
   if (!mounted) {
-    return <Button variant="ghost" size="icon-sm" className="text-foreground/60" />
+    return <Button variant="ghost" size="icon-sm" className="text-foreground/60" aria-hidden="true" tabIndex={-1} />
   }
 
   return (

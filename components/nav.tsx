@@ -14,7 +14,7 @@ const links = [
 export function Nav() {
   const pathname = usePathname()
   return (
-    <nav className="sticky top-0 z-40 border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl">
+    <nav className="sticky top-0 z-40 border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)]">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <span className="font-bold text-lg">지출 기록</span>
