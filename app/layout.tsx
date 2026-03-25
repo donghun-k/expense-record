@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import './globals.css'
 import { Nav } from '@/components/nav'
 import { Toaster } from '@/components/ui/sonner'
@@ -13,11 +14,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body className={inter.className}>
-        <Nav />
-        <main className="container mx-auto px-4 py-6">{children}</main>
-        <Toaster />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Nav />
+          <main className="container mx-auto px-4 py-6">{children}</main>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )
