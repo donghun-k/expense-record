@@ -63,7 +63,7 @@ export function AccountSettings({ accounts }: { accounts: Account[] }) {
             placeholder="계좌명 입력"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); handleCreate() } }}
           />
           <Button onClick={handleCreate} disabled={isPending}>추가</Button>
         </div>
