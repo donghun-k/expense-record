@@ -118,7 +118,7 @@ Replace the `@layer base` block (lines 119-129) with:
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd194 100%);
     background-attachment: fixed;
   }
-  .dark body {
+  html.dark body {
     background: linear-gradient(135deg, #4a1942 0%, #3d1229 50%, #5c3d1e 100%);
   }
   html {
