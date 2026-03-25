@@ -10,11 +10,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary/90 text-primary-foreground backdrop-blur-[var(--glass-blur)] [a]:hover:bg-primary/70",
+        default: "bg-primary/90 text-primary-foreground backdrop-blur-(--glass-blur) [a]:hover:bg-primary/70",
         outline:
-          "border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-[var(--glass-blur)] hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
+          "border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-(--glass-blur) hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
         secondary:
-          "bg-[var(--glass-bg)] text-secondary-foreground backdrop-blur-[var(--glass-blur)] hover:bg-accent aria-expanded:bg-accent aria-expanded:text-secondary-foreground",
+          "bg-[var(--glass-bg)] text-secondary-foreground backdrop-blur-(--glass-blur) hover:bg-accent aria-expanded:bg-accent aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-[var(--glass-bg)] hover:text-foreground aria-expanded:bg-[var(--glass-bg)] aria-expanded:text-foreground",
         destructive:
