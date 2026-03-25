@@ -9,7 +9,7 @@ export async function getCategories(accountId?: string): Promise<Category[]> {
     ? { property: '계좌', relation: { contains: accountId } }
     : undefined
 
-  const response = await (notion.databases as any).query({
+  const response = await notion.databases.query({
     database_id: DB.CATEGORY,
     ...(filter ? { filter } : {}),
     sorts: [{ property: '카테고리명', direction: 'ascending' }],
@@ -51,7 +51,7 @@ export async function updateCategory(id: string, name: string, accountId: string
 
 export async function deleteCategory(id: string): Promise<{ success: boolean; message?: string }> {
   // 참조 지출기록 확인
-  const expenses = await (notion.databases as any).query({
+  const expenses = await notion.databases.query({
     database_id: DB.EXPENSE,
     filter: { property: '카테고리', relation: { contains: id } },
   })
@@ -60,7 +60,7 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; me
   }
 
   // 참조 예산 확인
-  const budgets = await (notion.databases as any).query({
+  const budgets = await notion.databases.query({
     database_id: DB.BUDGET,
     filter: { property: '카테고리', relation: { contains: id } },
   })

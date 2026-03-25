@@ -5,7 +5,7 @@ import { notion, DB } from '@/lib/notion'
 import type { Account } from '@/lib/types'
 
 export async function getAccounts(): Promise<Account[]> {
-  const response = await (notion.databases as any).query({
+  const response = await notion.databases.query({
     database_id: DB.ACCOUNT,
     sorts: [{ property: '계좌명', direction: 'ascending' }],
   })
@@ -42,7 +42,7 @@ export async function updateAccount(id: string, name: string): Promise<void> {
 
 export async function deleteAccount(id: string): Promise<{ success: boolean; message?: string }> {
   // 참조 카테고리 확인
-  const categories = await (notion.databases as any).query({
+  const categories = await notion.databases.query({
     database_id: DB.CATEGORY,
     filter: { property: '계좌', relation: { contains: id } },
   })
@@ -51,7 +51,7 @@ export async function deleteAccount(id: string): Promise<{ success: boolean; mes
   }
 
   // 참조 지출기록 확인
-  const expenses = await (notion.databases as any).query({
+  const expenses = await notion.databases.query({
     database_id: DB.EXPENSE,
     filter: { property: '계좌', relation: { contains: id } },
   })

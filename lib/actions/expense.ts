@@ -38,7 +38,7 @@ export async function getExpensesByMonth(yearMonth: string): Promise<Expense[]> 
   // toISOString() 타임존 버그 방지: date-fns로 직접 포맷
   const endDate = format(addMonths(new Date(year, month - 1, 1), 1), 'yyyy-MM-dd')
 
-  const response = await (notion.databases as any).query({
+  const response = await notion.databases.query({
     database_id: DB.EXPENSE,
     filter: {
       and: [

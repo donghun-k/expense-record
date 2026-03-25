@@ -5,7 +5,7 @@ import { notion, DB } from '@/lib/notion'
 import type { Budget } from '@/lib/types'
 
 export async function getBudgetsByMonth(yearMonth: string): Promise<Budget[]> {
-  const response = await (notion.databases as any).query({
+  const response = await notion.databases.query({
     database_id: DB.BUDGET,
     filter: {
       property: '연월',
@@ -29,7 +29,7 @@ export async function upsertBudget(
 ): Promise<void> {
   if (isNaN(amount) || amount < 0) throw new Error('올바른 예산 금액을 입력해주세요')
 
-  const existing = await (notion.databases as any).query({
+  const existing = await notion.databases.query({
     database_id: DB.BUDGET,
     filter: {
       and: [
