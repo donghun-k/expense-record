@@ -30,14 +30,23 @@ interface Period {
 
 // 주어진 날짜가 속한 기간 반환
 function getCurrentPeriod(date: Date): Period
+// 로직:
+//   if (date.getDate() >= 25)
+//     start = 이번달/25, end = 다음달/24
+//   else
+//     start = 전달/25, end = 이번달/24
+//
 // 예: 3/25~4/24 사이 → { start: "2026-03-25", end: "2026-04-24", label: "3/25 ~ 4/24", yearMonth: "2026-03" }
 // 예: 3/1~3/24 사이 → { start: "2026-02-25", end: "2026-03-24", label: "2/25 ~ 3/24", yearMonth: "2026-02" }
+// 연말: 12/25 → { start: "2026-12-25", end: "2027-01-24", yearMonth: "2026-12" }
+// 연초: 1/1 → { start: "2025-12-25", end: "2026-01-24", yearMonth: "2025-12" }
 
 // 이전/다음 기간 계산
 function getAdjacentPeriod(period: Period, direction: 'prev' | 'next'): Period
 
 // yearMonth로부터 Period 복원 (URL 파라미터 → Period 변환)
 // getCurrentPeriod(new Date(year, month - 1, 25)) 로 구현
+// 주의: new Date("YYYY-MM-25") 문자열 파싱 사용 금지 (UTC 버그). 반드시 new Date(year, month-1, 25) 사용
 ```
 
 ### 2. 데이터 조회 로직 변경
@@ -76,10 +85,20 @@ function getAdjacentPeriod(period: Period, direction: 'prev' | 'next'): Period
 - 예산 현황에 현재 기간 라벨 표시
 - `getExpensesByPeriod(getCurrentPeriod(new Date()))` 로 조회
 
+#### `app/settings/page.tsx`
+
+- `prevYearMonth` 계산: `subMonths` 대신 `getAdjacentPeriod(currentPeriod, 'prev').yearMonth` 사용
+- 현재/이전 기간 예산 모두 Period 기반으로 조회
+
 #### `components/settings/budget-settings.tsx`
 
 - 월 선택 표시를 기간 라벨로 변경
-- "전월에서 복사" → 이전 기간의 `yearMonth` 사용
+- `handleCopyFromPrevious`: `subMonths` 대신 `getAdjacentPeriod(currentPeriod, 'prev').yearMonth` 사용
+- `currentYearMonth` prop 대신 `Period` 객체를 받도록 변경
+
+#### `components/month-selector.tsx` UI 조정
+
+- 라벨 영역 너비: `w-24` → 기간 라벨("3/25 ~ 4/24") 수용 가능하도록 확장
 
 ### 4. 호출부 변경 요약
 
@@ -87,7 +106,8 @@ function getAdjacentPeriod(period: Period, direction: 'prev' | 'next'): Period
 |------|------|------|
 | `app/page.tsx` | `getExpensesByMonth(currentYearMonth)` | `getExpensesByPeriod(getCurrentPeriod(new Date()))` |
 | `app/history/page.tsx` | `getExpensesByMonth(yearMonth)` | `getExpensesByPeriod(period)` |
-| `app/settings/page.tsx` | `getBudgetsByMonth(currentYearMonth)` | `getBudgetsByMonth(getCurrentPeriod(new Date()).yearMonth)` |
+| `app/settings/page.tsx` | `subMonths`로 `prevYearMonth` 계산 | `getAdjacentPeriod(currentPeriod, 'prev').yearMonth` |
+| `budget-settings.tsx` | `subMonths`로 전월 계산 | `getAdjacentPeriod`로 이전 기간 계산 |
 
 ## 변경하지 않는 것
 
@@ -95,3 +115,18 @@ function getAdjacentPeriod(period: Period, direction: 'prev' | 'next'): Period
 - 예산 DB의 `연월` 필드 형식 (`"YYYY-MM"`)
 - 지출 입력 폼 로직
 - 다크모드, 토스트, 에러 바운더리 등 인프라
+
+## 테스트 케이스 (`__tests__/utils/period.test.ts`)
+
+### `getCurrentPeriod`
+- 25일 당일 (3/25) → 새 기간 시작 (`start: "2026-03-25"`)
+- 24일 당일 (3/24) → 이전 기간 마지막 날 (`end: "2026-03-24"`)
+- 월 중간 (3/15) → 이전 기간에 속함 (`start: "2026-02-25"`)
+- 연말 경계 (12/25) → `yearMonth: "2026-12"`, `end: "2027-01-24"`
+- 연초 경계 (1/1) → `yearMonth: "2025-12"`, `start: "2025-12-25"`
+
+### `getAdjacentPeriod`
+- 다음 기간: "3/25~4/24" → "4/25~5/24"
+- 이전 기간: "3/25~4/24" → "2/25~3/24"
+- 연말→연초 순환: "12/25~1/24" → next → "1/25~2/24"
+- 연초→전년 순환: "1/25~2/24" → prev → "12/25~1/24"
