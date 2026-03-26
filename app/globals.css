@@ -145,6 +145,9 @@
     .dark {
       --glass-bg: rgba(40, 20, 30, 0.9);
     }
+    [data-slot="button"] {
+      transform: none !important;
+    }
   }
   @media (max-width: 768px) {
     :root, .dark {
