@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { m, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -10,9 +11,22 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { createCategory, updateCategory, deleteCategory } from '@/lib/actions/category'
+import { useLoadingAction } from '@/components/loading-provider'
 import type { Account, Category } from '@/lib/types'
 
+const listVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.25 } },
+}
+
 export function CategorySettings({ accounts, categories }: { accounts: Account[]; categories: Category[] }) {
+  const [localCategories, setLocalCategories] = useState(categories)
   const [newName, setNewName] = useState('')
   const [newAccountId, setNewAccountId] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -20,11 +34,15 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
   const [editingAccountId, setEditingAccountId] = useState('')
   const [newIsFixed, setNewIsFixed] = useState(false)
   const [editingIsFixed, setEditingIsFixed] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { execute, isPending } = useLoadingAction()
+
+  useEffect(() => {
+    setLocalCategories(categories)
+  }, [categories])
 
   const handleCreate = () => {
     if (!newName.trim() || !newAccountId) return
-    startTransition(async () => {
+    execute(async () => {
       try {
         await createCategory(newName, newAccountId, newIsFixed)
         setNewName('')
@@ -38,7 +56,7 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
   }
 
   const handleUpdate = (id: string) => {
-    startTransition(async () => {
+    execute(async () => {
       try {
         await updateCategory(id, editingName, editingAccountId, editingIsFixed)
         setEditingId(null)
@@ -50,15 +68,19 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
   }
 
   const handleDelete = (id: string) => {
-    startTransition(async () => {
+    const backup = localCategories
+    setLocalCategories((prev) => prev.filter((c) => c.id !== id))
+    execute(async () => {
       try {
         const result = await deleteCategory(id)
         if (result.success) {
           toast.success('카테고리가 삭제됐습니다')
         } else {
+          setLocalCategories(backup)
           toast.error(result.message)
         }
       } catch {
+        setLocalCategories(backup)
         toast.error('삭제 중 오류가 발생했습니다')
       }
     })
@@ -94,49 +116,56 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
           </div>
           <Button onClick={handleCreate} disabled={isPending || !newName.trim() || !newAccountId}>추가</Button>
         </div>
-        <div className="space-y-2">
-          {categories.map((category) => {
-            const accountName = accounts.find((a) => a.id === category.accountId)?.name ?? ''
-            return (
-              <div key={category.id} className="flex items-center gap-2">
-                {editingId === category.id ? (
-                  <>
-                    <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} className="flex-1" />
-                    <Select value={editingAccountId} onValueChange={(v) => setEditingAccountId(v ?? '')}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue
-                          placeholder="계좌 선택"
-                          label={accounts.find((a) => a.id === editingAccountId)?.name}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {accounts.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1.5">
-                      <Checkbox id={`editIsFixed-${category.id}`} checked={editingIsFixed} onCheckedChange={(v) => setEditingIsFixed(v === true)} />
-                      <Label htmlFor={`editIsFixed-${category.id}`} className="text-sm whitespace-nowrap">고정</Label>
-                    </div>
-                    <Button size="sm" onClick={() => handleUpdate(category.id)} disabled={isPending}>저장</Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>취소</Button>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-1">
-                      {category.name}
-                      {category.isFixed && <Badge variant="outline" className="ml-2 text-xs">고정</Badge>}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{accountName}</span>
-                    <Button size="sm" variant="outline" onClick={() => { setEditingId(category.id); setEditingName(category.name); setEditingAccountId(category.accountId); setEditingIsFixed(category.isFixed) }}>수정</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)} disabled={isPending}>삭제</Button>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        <m.div
+          className="space-y-2"
+          variants={listVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <AnimatePresence mode="popLayout">
+            {localCategories.map((category) => {
+              const accountName = accounts.find((a) => a.id === category.accountId)?.name ?? ''
+              return (
+                <m.div key={category.id} className="flex items-center gap-2" variants={itemVariants} exit="exit">
+                  {editingId === category.id ? (
+                    <>
+                      <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} className="flex-1" />
+                      <Select value={editingAccountId} onValueChange={(v) => setEditingAccountId(v ?? '')}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue
+                            placeholder="계좌 선택"
+                            label={accounts.find((a) => a.id === editingAccountId)?.name}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accounts.map((a) => (
+                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex items-center gap-1.5">
+                        <Checkbox id={`editIsFixed-${category.id}`} checked={editingIsFixed} onCheckedChange={(v) => setEditingIsFixed(v === true)} />
+                        <Label htmlFor={`editIsFixed-${category.id}`} className="text-sm whitespace-nowrap">고정</Label>
+                      </div>
+                      <Button size="sm" onClick={() => handleUpdate(category.id)} disabled={isPending}>저장</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>취소</Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1">
+                        {category.name}
+                        {category.isFixed && <Badge variant="outline" className="ml-2 text-xs">고정</Badge>}
+                      </span>
+                      <span className="text-sm text-muted-foreground">{accountName}</span>
+                      <Button size="sm" variant="outline" onClick={() => { setEditingId(category.id); setEditingName(category.name); setEditingAccountId(category.accountId); setEditingIsFixed(category.isFixed) }}>수정</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)} disabled={isPending}>삭제</Button>
+                    </>
+                  )}
+                </m.div>
+              )
+            })}
+          </AnimatePresence>
+        </m.div>
       </CardContent>
     </Card>
   )

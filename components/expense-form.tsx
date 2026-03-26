@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { CalendarIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { m } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { createExpense } from '@/lib/actions/expense'
+import { useLoadingAction } from '@/components/loading-provider'
 import type { Account, Category } from '@/lib/types'
 
 interface Props {
@@ -27,7 +29,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
   const [amount, setAmount] = useState('')
   const [accountId, setAccountId] = useState('')
   const [categoryId, setCategoryId] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const { execute, isPending } = useLoadingAction()
 
   const filteredCategories = categories.filter((c) => c.accountId === accountId)
 
@@ -48,7 +50,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
       return
     }
 
-    startTransition(async () => {
+    execute(async () => {
       try {
         await createExpense({
           title,
@@ -63,13 +65,18 @@ export function ExpenseForm({ accounts, categories }: Props) {
         setCategoryId('')
         setDate(new Date())
         toast.success('지출이 기록됐습니다')
-      } catch (e: any) {
-        toast.error(e.message ?? '지출 기록에 실패했습니다')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : '지출 기록에 실패했습니다')
       }
     })
   }
 
   return (
+    <m.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
     <Card>
       <CardHeader><CardTitle>지출 입력</CardTitle></CardHeader>
       <CardContent>
@@ -147,10 +154,11 @@ export function ExpenseForm({ accounts, categories }: Props) {
           </div>
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? '기록 중...' : '지출 기록'}
+            지출 기록
           </Button>
         </form>
       </CardContent>
     </Card>
+    </m.div>
   )
 }

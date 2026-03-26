@@ -5,6 +5,10 @@ import { ThemeProvider } from 'next-themes'
 import './globals.css'
 import { Nav } from '@/components/nav'
 import { Toaster } from '@/components/ui/sonner'
+import { MotionProvider } from '@/components/motion-provider'
+import { LoadingProvider } from '@/components/loading-provider'
+import { NavigationProgressProvider } from '@/components/navigation-progress'
+import { PageTransition } from '@/components/page-transition'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,9 +21,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ko" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Nav />
-          <main className="container mx-auto px-4 py-6">{children}</main>
-          <Toaster />
+          <MotionProvider>
+            <LoadingProvider>
+              <NavigationProgressProvider>
+                <Nav />
+                <main className="container mx-auto px-4 py-6">
+                  <PageTransition>{children}</PageTransition>
+                </main>
+                <Toaster />
+              </NavigationProgressProvider>
+            </LoadingProvider>
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>
