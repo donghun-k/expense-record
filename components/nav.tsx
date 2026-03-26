@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { useNavigationProgress } from '@/components/navigation-progress'
 
 const links = [
   { href: '/', label: '지출 입력' },
@@ -13,6 +14,7 @@ const links = [
 
 export function Nav() {
   const pathname = usePathname()
+  const navigationProgress = useNavigationProgress()
   return (
     <nav className="sticky top-0 z-40 border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-(--glass-blur)">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
@@ -23,6 +25,7 @@ export function Nav() {
               <Link
                 key={href}
                 href={href}
+                onClick={() => pathname !== href && navigationProgress?.start()}
                 className={cn(
                   'text-sm font-medium transition-colors hover:text-primary',
                   pathname === href ? 'text-primary' : 'text-muted-foreground'

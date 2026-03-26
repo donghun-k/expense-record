@@ -4,13 +4,16 @@ import { useRouter } from 'next/navigation'
 import { format, addMonths, subMonths } from 'date-fns'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useNavigationProgress } from '@/components/navigation-progress'
 
 export function MonthSelector({ currentMonth }: { currentMonth: string }) {
   const router = useRouter()
+  const navigationProgress = useNavigationProgress()
   const [y, m] = currentMonth.split('-').map(Number)
   const current = new Date(y, m - 1, 1)
 
   const go = (date: Date) => {
+    navigationProgress?.start()
     router.push(`/history?month=${format(date, 'yyyy-MM')}`)
   }
 
