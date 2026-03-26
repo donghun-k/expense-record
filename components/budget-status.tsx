@@ -100,6 +100,12 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                         </div>
                       </div>
                     ))}
+                    <div className="flex items-center justify-between text-sm border-t pt-2">
+                      <span className="text-muted-foreground">소계</span>
+                      <span className="font-medium">
+                        <AnimatedNumber value={group.items.reduce((sum, s) => sum + s.budget, 0)} />원
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
