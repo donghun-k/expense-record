@@ -82,7 +82,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
     })
   }
 
-  const filteredCategories = categories.filter((c) => c.accountId === editAccountId)
+  const filteredCategories = categories.filter((c) => c.accountId === editAccountId && !c.isFixed)
 
   const filteredExpenses = expenses.filter((e) => {
     if (filterAccountId && e.accountId !== filterAccountId) return false
