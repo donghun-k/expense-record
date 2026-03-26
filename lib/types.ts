@@ -7,6 +7,7 @@ export interface Category {
   id: string
   name: string
   accountId: string
+  isFixed: boolean
 }
 
 export interface Budget {
@@ -36,4 +37,5 @@ export interface BudgetStatus {
   spent: number
   remaining: number
   isOver: boolean
+  isFixed: boolean
 }
