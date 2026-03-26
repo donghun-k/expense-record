@@ -30,6 +30,8 @@ export interface Expense {
 export interface BudgetStatus {
   categoryId: string
   categoryName: string
+  accountId: string
+  accountName: string
   budget: number
   spent: number
   remaining: number

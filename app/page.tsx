@@ -26,10 +26,14 @@ export default async function HomePage() {
     .map((b) => {
       const category = categories.find((c) => c.id === b.categoryId)
       if (!category) return null
+      const account = accounts.find((a) => a.id === category.accountId)
+      if (!account) return null
       const spent = spentByCategory[b.categoryId] ?? 0
       return {
         categoryId: b.categoryId,
         categoryName: category.name,
+        accountId: account.id,
+        accountName: account.name,
         ...calculateBudgetStatus(b.amount, spent),
       }
     })
