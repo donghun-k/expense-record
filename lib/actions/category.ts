@@ -19,6 +19,7 @@ export async function getCategories(accountId?: string): Promise<Category[]> {
     id: page.id,
     name: page.properties['카테고리명'].title[0]?.plain_text ?? '',
     accountId: page.properties['계좌'].relation[0]?.id ?? '',
+    isFixed: page.properties['고정여부']?.checkbox ?? false,
   }))
 }
 
