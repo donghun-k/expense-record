@@ -6,6 +6,7 @@ import './globals.css'
 import { Nav } from '@/components/nav'
 import { Toaster } from '@/components/ui/sonner'
 import { MotionProvider } from '@/components/motion-provider'
+import { LoadingProvider } from '@/components/loading-provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,9 +20,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <MotionProvider>
-            <Nav />
-            <main className="container mx-auto px-4 py-6">{children}</main>
-            <Toaster />
+            <LoadingProvider>
+              <Nav />
+              <main className="container mx-auto px-4 py-6">{children}</main>
+              <Toaster />
+            </LoadingProvider>
           </MotionProvider>
         </ThemeProvider>
       </body>
