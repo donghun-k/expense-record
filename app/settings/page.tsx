@@ -2,13 +2,10 @@
 export const dynamic = 'force-dynamic'
 
 import { format, subMonths } from 'date-fns'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getAccounts } from '@/lib/actions/account'
 import { getCategories } from '@/lib/actions/category'
 import { getBudgetsByMonth } from '@/lib/actions/budget'
-import { AccountSettings } from '@/components/settings/account-settings'
-import { CategorySettings } from '@/components/settings/category-settings'
-import { BudgetSettings } from '@/components/settings/budget-settings'
+import { SettingsTabs } from '@/components/settings/settings-tabs'
 
 export default async function SettingsPage() {
   const currentYearMonth = format(new Date(), 'yyyy-MM')
@@ -24,27 +21,13 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">설정</h1>
-      <Tabs defaultValue="accounts">
-        <TabsList>
-          <TabsTrigger value="accounts">계좌</TabsTrigger>
-          <TabsTrigger value="categories">카테고리</TabsTrigger>
-          <TabsTrigger value="budgets">예산</TabsTrigger>
-        </TabsList>
-        <TabsContent value="accounts" className="mt-4">
-          <AccountSettings accounts={accounts} />
-        </TabsContent>
-        <TabsContent value="categories" className="mt-4">
-          <CategorySettings accounts={accounts} categories={categories} />
-        </TabsContent>
-        <TabsContent value="budgets" className="mt-4">
-          <BudgetSettings
-            categories={categories}
-            currentYearMonth={currentYearMonth}
-            budgets={budgets}
-            hasPreviousMonthBudget={prevBudgets.length > 0}
-          />
-        </TabsContent>
-      </Tabs>
+      <SettingsTabs
+        accounts={accounts}
+        categories={categories}
+        budgets={budgets}
+        currentYearMonth={currentYearMonth}
+        hasPreviousMonthBudget={prevBudgets.length > 0}
+      />
     </div>
   )
 }
