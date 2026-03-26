@@ -23,7 +23,7 @@ export async function getCategories(accountId?: string): Promise<Category[]> {
   }))
 }
 
-export async function createCategory(name: string, accountId: string): Promise<void> {
+export async function createCategory(name: string, accountId: string, isFixed: boolean = false): Promise<void> {
   if (!name.trim()) throw new Error('카테고리명을 입력해주세요')
   if (!accountId) throw new Error('계좌를 선택해주세요')
 
@@ -32,12 +32,14 @@ export async function createCategory(name: string, accountId: string): Promise<v
     properties: {
       '카테고리명': { title: [{ text: { content: name.trim() } }] },
       '계좌': { relation: [{ id: accountId }] },
+      '고정여부': { checkbox: isFixed },
     },
   })
   revalidatePath('/settings')
+  revalidatePath('/')
 }
 
-export async function updateCategory(id: string, name: string, accountId: string): Promise<void> {
+export async function updateCategory(id: string, name: string, accountId: string, isFixed: boolean = false): Promise<void> {
   if (!name.trim()) throw new Error('카테고리명을 입력해주세요')
 
   await notion.pages.update({
@@ -45,9 +47,11 @@ export async function updateCategory(id: string, name: string, accountId: string
     properties: {
       '카테고리명': { title: [{ text: { content: name.trim() } }] },
       '계좌': { relation: [{ id: accountId }] },
+      '고정여부': { checkbox: isFixed },
     },
   })
   revalidatePath('/settings')
+  revalidatePath('/')
 }
 
 export async function deleteCategory(id: string): Promise<{ success: boolean; message?: string }> {
