@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { format, subMonths } from 'date-fns'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { upsertBudget, copyBudgetFromPreviousMonth } from '@/lib/actions/budget'
+import { useLoadingAction } from '@/components/loading-provider'
 import type { Budget, Category } from '@/lib/types'
 
 interface Props {
@@ -39,7 +40,7 @@ export function BudgetSettings({ categories, currentYearMonth, budgets, hasPrevi
     return init
   })
   const [savedState, setSavedState] = useState<Record<string, 'saved' | 'dirty' | 'idle'>>({})
-  const [isPending, startTransition] = useTransition()
+  const { execute, isPending } = useLoadingAction()
 
   const handleSave = (categoryId: string, categoryName: string) => {
     const amount = parseInt(parseNumber(amounts[categoryId] ?? '0'), 10)
@@ -47,7 +48,7 @@ export function BudgetSettings({ categories, currentYearMonth, budgets, hasPrevi
       toast.error('올바른 금액을 입력해주세요')
       return
     }
-    startTransition(async () => {
+    execute(async () => {
       try {
         await upsertBudget(currentYearMonth, categoryId, amount, categoryName)
         toast.success('예산이 저장됐습니다')
@@ -61,7 +62,7 @@ export function BudgetSettings({ categories, currentYearMonth, budgets, hasPrevi
   const handleCopyFromPrevious = () => {
     const [year, month] = currentYearMonth.split('-').map(Number)
     const prevYearMonth = format(subMonths(new Date(year, month - 1, 1), 1), 'yyyy-MM')
-    startTransition(async () => {
+    execute(async () => {
       try {
         const copied = await copyBudgetFromPreviousMonth(currentYearMonth, prevYearMonth)
         if (copied) {
