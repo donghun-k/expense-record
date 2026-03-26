@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { createCategory, updateCategory, deleteCategory } from '@/lib/actions/category'
 import type { Account, Category } from '@/lib/types'
 
@@ -15,15 +18,18 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [editingAccountId, setEditingAccountId] = useState('')
+  const [newIsFixed, setNewIsFixed] = useState(false)
+  const [editingIsFixed, setEditingIsFixed] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const handleCreate = () => {
     if (!newName.trim() || !newAccountId) return
     startTransition(async () => {
       try {
-        await createCategory(newName, newAccountId)
+        await createCategory(newName, newAccountId, newIsFixed)
         setNewName('')
         setNewAccountId('')
+        setNewIsFixed(false)
         toast.success('카테고리가 추가됐습니다')
       } catch {
         toast.error('카테고리 추가에 실패했습니다')
@@ -34,7 +40,7 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
   const handleUpdate = (id: string) => {
     startTransition(async () => {
       try {
-        await updateCategory(id, editingName, editingAccountId)
+        await updateCategory(id, editingName, editingAccountId, editingIsFixed)
         setEditingId(null)
         toast.success('카테고리가 수정됐습니다')
       } catch {
@@ -82,6 +88,10 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
               ))}
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-1.5">
+            <Checkbox id="newIsFixed" checked={newIsFixed} onCheckedChange={(v) => setNewIsFixed(v === true)} />
+            <Label htmlFor="newIsFixed" className="text-sm whitespace-nowrap">고정</Label>
+          </div>
           <Button onClick={handleCreate} disabled={isPending || !newName.trim() || !newAccountId}>추가</Button>
         </div>
         <div className="space-y-2">
@@ -105,14 +115,21 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
                         ))}
                       </SelectContent>
                     </Select>
+                    <div className="flex items-center gap-1.5">
+                      <Checkbox id={`editIsFixed-${category.id}`} checked={editingIsFixed} onCheckedChange={(v) => setEditingIsFixed(v === true)} />
+                      <Label htmlFor={`editIsFixed-${category.id}`} className="text-sm whitespace-nowrap">고정</Label>
+                    </div>
                     <Button size="sm" onClick={() => handleUpdate(category.id)} disabled={isPending}>저장</Button>
                     <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>취소</Button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1">{category.name}</span>
+                    <span className="flex-1">
+                      {category.name}
+                      {category.isFixed && <Badge variant="outline" className="ml-2 text-xs">고정</Badge>}
+                    </span>
                     <span className="text-sm text-muted-foreground">{accountName}</span>
-                    <Button size="sm" variant="outline" onClick={() => { setEditingId(category.id); setEditingName(category.name); setEditingAccountId(category.accountId) }}>수정</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditingId(category.id); setEditingName(category.name); setEditingAccountId(category.accountId); setEditingIsFixed(category.isFixed) }}>수정</Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)} disabled={isPending}>삭제</Button>
                   </>
                 )}
