@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { CalendarIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { m, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { updateExpense, deleteExpense } from '@/lib/actions/expense'
+import { useLoadingAction } from '@/components/loading-provider'
 import type { Account, Category, Expense } from '@/lib/types'
 
 interface Props {
@@ -23,7 +25,21 @@ interface Props {
   categories: Category[]
 }
 
+const listVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.05 },
+  },
+}
+
+const rowVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.25 } },
+}
+
 export function ExpenseList({ expenses, accounts, categories }: Props) {
+  const [localExpenses, setLocalExpenses] = useState(expenses)
   const [filterAccountId, setFilterAccountId] = useState('')
   const [filterCategoryId, setFilterCategoryId] = useState('')
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
@@ -32,8 +48,13 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
   const [editAmount, setEditAmount] = useState('')
   const [editAccountId, setEditAccountId] = useState('')
   const [editCategoryId, setEditCategoryId] = useState('')
-  const [isUpdating, startUpdateTransition] = useTransition()
-  const [isDeleting, startDeleteTransition] = useTransition()
+  const { execute: executeUpdate, isPending: isUpdating } = useLoadingAction()
+  const { execute: executeDelete } = useLoadingAction()
+
+  // 서버 props 갱신 시 로컬 상태 동기화
+  useEffect(() => {
+    setLocalExpenses(expenses)
+  }, [expenses])
 
   const openEdit = (expense: Expense) => {
     setEditingExpense(expense)
@@ -53,7 +74,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
       toast.error('올바른 금액을 입력해주세요')
       return
     }
-    startUpdateTransition(async () => {
+    executeUpdate(async () => {
       try {
         await updateExpense(editingExpense.id, {
           title: editTitle,
@@ -72,11 +93,15 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
 
   const handleDelete = (id: string) => {
     if (!confirm('이 지출 기록을 삭제하시겠습니까?')) return
-    startDeleteTransition(async () => {
+    // 낙관적 삭제
+    const backup = localExpenses
+    setLocalExpenses((prev) => prev.filter((e) => e.id !== id))
+    executeDelete(async () => {
       try {
         await deleteExpense(id)
         toast.success('지출이 삭제됐습니다')
       } catch {
+        setLocalExpenses(backup)
         toast.error('지출 삭제에 실패했습니다')
       }
     })
@@ -84,7 +109,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
 
   const filteredCategories = categories.filter((c) => c.accountId === editAccountId && !c.isFixed)
 
-  const filteredExpenses = expenses.filter((e) => {
+  const filteredExpenses = localExpenses.filter((e) => {
     if (filterAccountId && e.accountId !== filterAccountId) return false
     if (filterCategoryId && e.categoryId !== filterCategoryId) return false
     return true
@@ -133,7 +158,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
       </div>
       <div className="text-sm text-muted-foreground mb-4">
         {(filterAccountId || filterCategoryId)
-          ? `필터 결과: ${filteredExpenses.length}건 · ${filteredTotal.toLocaleString()}원 (전체 ${expenses.length}건 · ${expenses.reduce((s, e) => s + e.amount, 0).toLocaleString()}원)`
+          ? `필터 결과: ${filteredExpenses.length}건 · ${filteredTotal.toLocaleString()}원 (전체 ${localExpenses.length}건 · ${localExpenses.reduce((s, e) => s + e.amount, 0).toLocaleString()}원)`
           : `총 ${filteredExpenses.length}건 · ${filteredTotal.toLocaleString()}원`
         }
       </div>
@@ -156,26 +181,40 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
               </TableCell>
             </TableRow>
           ) : (
-            filteredExpenses.map((expense) => {
-              // UTC 파싱 버그 방지: "YYYY-MM-DD" 문자열을 로컬 날짜로 파싱
-              const [ey, em, ed] = expense.date.split('-').map(Number)
-              const displayDate = format(new Date(ey, em - 1, ed), 'MM/dd', { locale: ko })
-              return (
-              <TableRow key={expense.id}>
-                <TableCell>{displayDate}</TableCell>
-                <TableCell>{expense.title}</TableCell>
-                <TableCell className="text-right">{expense.amount.toLocaleString()}원</TableCell>
-                <TableCell>{expense.accountName}</TableCell>
-                <TableCell>{expense.categoryName}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(expense)}>수정</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(expense.id)} disabled={isDeleting}>삭제</Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-              )
-            })
+            <m.tr
+              key={`stagger-${filterAccountId}-${filterCategoryId}`}
+              variants={listVariants}
+              initial="hidden"
+              animate="visible"
+              style={{ display: 'contents' }}
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredExpenses.map((expense) => {
+                  // UTC 파싱 버그 방지: "YYYY-MM-DD" 문자열을 로컬 날짜로 파싱
+                  const [ey, em, ed] = expense.date.split('-').map(Number)
+                  const displayDate = format(new Date(ey, em - 1, ed), 'MM/dd', { locale: ko })
+                  return (
+                    <m.tr
+                      key={expense.id}
+                      variants={rowVariants}
+                      exit="exit"
+                    >
+                      <TableCell>{displayDate}</TableCell>
+                      <TableCell>{expense.title}</TableCell>
+                      <TableCell className="text-right">{expense.amount.toLocaleString()}원</TableCell>
+                      <TableCell>{expense.accountName}</TableCell>
+                      <TableCell>{expense.categoryName}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" onClick={() => openEdit(expense)}>수정</Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDelete(expense.id)}>삭제</Button>
+                        </div>
+                      </TableCell>
+                    </m.tr>
+                  )
+                })}
+              </AnimatePresence>
+            </m.tr>
           )}
         </TableBody>
       </Table>
