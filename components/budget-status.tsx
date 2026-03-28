@@ -48,6 +48,10 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
   const fixedGroups = groupByAccount(fixedStatuses)
   const fixedTotal = fixedStatuses.reduce((sum, s) => sum + s.budget, 0)
 
+  const normalBudgetTotal = normalStatuses.reduce((sum, s) => sum + s.budget, 0)
+  const normalSpentTotal = normalStatuses.reduce((sum, s) => sum + s.spent, 0)
+  const normalRemainingTotal = normalBudgetTotal - normalSpentTotal
+
   return (
     <m.div
       initial={{ opacity: 0, y: 20 }}
@@ -78,6 +82,23 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
               </div>
             </div>
           ))}
+
+          {/* 일반 지출 총합 */}
+          {normalStatuses.length > 0 && (
+            <>
+              <Separator className="border-dashed" />
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-muted-foreground">합계</span>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-muted-foreground">예산 <AnimatedNumber value={normalBudgetTotal} />원</span>
+                  <span className="text-muted-foreground">사용 <AnimatedNumber value={normalSpentTotal} />원</span>
+                  <Badge variant={normalRemainingTotal < 0 ? 'destructive' : 'secondary'}>
+                    {normalRemainingTotal > 0 ? '+' : ''}<AnimatedNumber value={normalRemainingTotal} />원
+                  </Badge>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* 고정 지출 섹션 */}
           {fixedStatuses.length > 0 && (
