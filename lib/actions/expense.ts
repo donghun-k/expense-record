@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { format, addMonths } from 'date-fns'
 import { notion, DB } from '@/lib/notion'
+import { getMonthDateRange } from '@/lib/utils/date-range'
 import type { Expense } from '@/lib/types'
 
 export async function createExpense(data: {
@@ -32,18 +32,14 @@ export async function createExpense(data: {
 }
 
 export async function getExpensesByMonth(yearMonth: string): Promise<Expense[]> {
-  if (!/^\d{4}-\d{2}$/.test(yearMonth)) throw new Error('잘못된 연월 형식입니다')
-  const [year, month] = yearMonth.split('-').map(Number)
-  const startDate = `${yearMonth}-01`
-  // toISOString() 타임존 버그 방지: date-fns로 직접 포맷
-  const endDate = format(addMonths(new Date(year, month - 1, 1), 1), 'yyyy-MM-dd')
+  const { start: startDate, end: endDate } = getMonthDateRange(yearMonth)
 
   const response = await notion.databases.query({
     database_id: DB.EXPENSE,
     filter: {
       and: [
         { property: '날짜', date: { on_or_after: startDate } },
-        { property: '날짜', date: { before: endDate } },
+        { property: '날짜', date: { on_or_before: endDate } },
       ],
     },
     sorts: [{ property: '날짜', direction: 'descending' }],
