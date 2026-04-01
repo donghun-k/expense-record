@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { getCurrentYearMonth } from '@/lib/utils/date-range'
 import { getAccounts } from '@/lib/actions/account'
 import { getCategories } from '@/lib/actions/category'
 import { getBudgetsByMonth } from '@/lib/actions/budget'
@@ -11,7 +11,7 @@ import type { BudgetStatus } from '@/lib/types'
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const currentYearMonth = format(new Date(), 'yyyy-MM')
+  const currentYearMonth = getCurrentYearMonth()
 
   const [accounts, categories, budgets, expenses] = await Promise.all([
     getAccounts(),
