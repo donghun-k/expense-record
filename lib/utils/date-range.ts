@@ -21,3 +21,22 @@ export function getMonthDateRange(yearMonth: string): { start: string; end: stri
 
   return { start: startStr, end: endStr }
 }
+
+/**
+ * 주어진 날짜가 속하는 기준월(YYYY-MM)을 반환한다.
+ * 25일 이상 → 해당 월, 24일 이하 → 이전 월
+ */
+export function getCurrentYearMonth(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1 // 1-based
+  const day = date.getDate()
+
+  if (day >= 25) {
+    return `${year}-${String(month).padStart(2, '0')}`
+  }
+
+  // 24일 이전이면 이전 월
+  const prevMonth = month === 1 ? 12 : month - 1
+  const prevYear = month === 1 ? year - 1 : year
+  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`
+}
