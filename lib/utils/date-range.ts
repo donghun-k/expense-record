@@ -23,6 +23,18 @@ export function getMonthDateRange(yearMonth: string): { start: string; end: stri
 }
 
 /**
+ * 기준월(YYYY-MM)에서 이전 기준월을 반환한다.
+ * "2026-04" → "2026-03", "2026-01" → "2025-12"
+ */
+export function getPrevYearMonth(yearMonth: string): string {
+  if (!/^\d{4}-\d{2}$/.test(yearMonth)) throw new Error('잘못된 연월 형식입니다')
+  const [year, month] = yearMonth.split('-').map(Number)
+  const prevMonth = month === 1 ? 12 : month - 1
+  const prevYear = month === 1 ? year - 1 : year
+  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`
+}
+
+/**
  * 주어진 날짜가 속하는 기준월(YYYY-MM)을 반환한다.
  * 25일 이상 → 해당 월, 24일 이하 → 이전 월
  */

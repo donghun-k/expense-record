@@ -1,4 +1,4 @@
-import { getMonthDateRange, getCurrentYearMonth } from '@/lib/utils/date-range'
+import { getMonthDateRange, getCurrentYearMonth, getPrevYearMonth } from '@/lib/utils/date-range'
 
 describe('getMonthDateRange', () => {
   it('기본 케이스: 4월 → 04-25 ~ 05-24', () => {
@@ -42,5 +42,15 @@ describe('getCurrentYearMonth', () => {
 
   it('12월 25일 이후면 12월 반환', () => {
     expect(getCurrentYearMonth(new Date(2026, 11, 25))).toBe('2026-12')
+  })
+})
+
+describe('getPrevYearMonth', () => {
+  it('일반 케이스', () => {
+    expect(getPrevYearMonth('2026-04')).toBe('2026-03')
+  })
+
+  it('1월이면 전년 12월 반환', () => {
+    expect(getPrevYearMonth('2026-01')).toBe('2025-12')
   })
 })
