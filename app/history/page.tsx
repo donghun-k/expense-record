@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { getCurrentYearMonth } from '@/lib/utils/date-range'
 import { getAccounts } from '@/lib/actions/account'
 import { getCategories } from '@/lib/actions/category'
 import { getExpensesByMonth } from '@/lib/actions/expense'
@@ -11,7 +11,7 @@ interface Props {
 
 export default async function HistoryPage({ searchParams }: Props) {
   const { month } = await searchParams
-  const yearMonth = month ?? format(new Date(), 'yyyy-MM')
+  const yearMonth = month ?? getCurrentYearMonth()
 
   const [accounts, categories, expenses] = await Promise.all([
     getAccounts(),
