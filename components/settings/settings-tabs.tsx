@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AccountSettings } from '@/components/settings/account-settings'
 import { CategorySettings } from '@/components/settings/category-settings'
 import { BudgetSettings } from '@/components/settings/budget-settings'
+import { DataSettings } from '@/components/settings/data-settings'
 import type { Account, Category, Budget } from '@/lib/types'
 
 interface Props {
@@ -16,7 +17,7 @@ interface Props {
   hasPreviousMonthBudget: boolean
 }
 
-const TAB_ORDER = ['accounts', 'categories', 'budgets']
+const TAB_ORDER = ['accounts', 'categories', 'budgets', 'data']
 
 const tabVariants = {
   enter: (dir: number) => ({
@@ -50,6 +51,7 @@ export function SettingsTabs({ accounts, categories, budgets, currentYearMonth, 
         <TabsTrigger value="accounts">계좌</TabsTrigger>
         <TabsTrigger value="categories">카테고리</TabsTrigger>
         <TabsTrigger value="budgets">예산</TabsTrigger>
+        <TabsTrigger value="data">데이터</TabsTrigger>
       </TabsList>
       <div className="mt-4 overflow-hidden">
         <AnimatePresence mode="wait" custom={direction}>
@@ -72,6 +74,7 @@ export function SettingsTabs({ accounts, categories, budgets, currentYearMonth, 
                 hasPreviousMonthBudget={hasPreviousMonthBudget}
               />
             )}
+            {activeTab === 'data' && <DataSettings />}
           </m.div>
         </AnimatePresence>
       </div>
