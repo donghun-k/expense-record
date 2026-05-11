@@ -60,7 +60,7 @@ export function DataSettings() {
           지난 기간 지출 삭제
         </Button>
 
-        <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialog open={open} onOpenChange={(v) => { if (!isPending) setOpen(v) }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>지난 지출 기록을 삭제하시겠습니까?</AlertDialogTitle>
