@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { countPastExpenses } from '@/lib/actions/expense'
+import { countPastExpenses, deletePastExpenses } from '@/lib/actions/expense'
 import { notion } from '@/lib/notion'
 
 jest.mock('@/lib/notion', () => ({
@@ -25,6 +25,7 @@ jest.mock('@/lib/utils/date-range', () => {
 })
 
 const mockedQuery = notion.databases.query as jest.Mock
+const mockedUpdate = notion.pages.update as jest.Mock
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -81,5 +82,89 @@ describe('countPastExpenses', () => {
     const count = await countPastExpenses()
 
     expect(count).toBe(0)
+  })
+})
+
+describe('deletePastExpenses', () => {
+  it('대상 페이지를 모두 in_trash 처리하고 삭제 건수를 반환한다', async () => {
+    mockedQuery.mockResolvedValueOnce({
+      results: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }],
+      has_more: false,
+      next_cursor: null,
+    })
+    mockedUpdate.mockResolvedValue({})
+
+    const result = await deletePastExpenses()
+
+    expect(result).toEqual({ deletedCount: 3 })
+    expect(mockedUpdate).toHaveBeenCalledTimes(3)
+    expect(mockedUpdate).toHaveBeenNthCalledWith(1, { page_id: 'p1', in_trash: true })
+    expect(mockedUpdate).toHaveBeenNthCalledWith(2, { page_id: 'p2', in_trash: true })
+    expect(mockedUpdate).toHaveBeenNthCalledWith(3, { page_id: 'p3', in_trash: true })
+  })
+
+  it('성공 시 / 와 /history 캐시를 무효화한다', async () => {
+    mockedQuery.mockResolvedValueOnce({
+      results: [{ id: 'p1' }],
+      has_more: false,
+      next_cursor: null,
+    })
+    mockedUpdate.mockResolvedValue({})
+
+    await deletePastExpenses()
+
+    const { revalidatePath } = await import('next/cache')
+    expect(revalidatePath).toHaveBeenCalledWith('/')
+    expect(revalidatePath).toHaveBeenCalledWith('/history')
+  })
+
+  it('빈 결과면 0을 반환하고 update를 호출하지 않는다', async () => {
+    mockedQuery.mockResolvedValueOnce({
+      results: [],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    const result = await deletePastExpenses()
+
+    expect(result).toEqual({ deletedCount: 0 })
+    expect(mockedUpdate).not.toHaveBeenCalled()
+  })
+
+  it('삭제 중 실패해도 진행 카운트를 포함한 에러를 throw하고 캐시를 무효화한다', async () => {
+    mockedQuery.mockResolvedValueOnce({
+      results: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }],
+      has_more: false,
+      next_cursor: null,
+    })
+    mockedUpdate
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('rate limit'))
+
+    const { revalidatePath } = await import('next/cache')
+
+    await expect(deletePastExpenses()).rejects.toThrow(/1건 삭제 후 오류 발생/)
+    expect(revalidatePath).toHaveBeenCalledWith('/')
+    expect(revalidatePath).toHaveBeenCalledWith('/history')
+  })
+
+  it('페이지네이션을 처리하여 모든 ID를 수집 후 삭제한다', async () => {
+    mockedQuery
+      .mockResolvedValueOnce({
+        results: new Array(100).fill(0).map((_, i) => ({ id: `p${i}` })),
+        has_more: true,
+        next_cursor: 'cursor-1',
+      })
+      .mockResolvedValueOnce({
+        results: [{ id: 'p100' }],
+        has_more: false,
+        next_cursor: null,
+      })
+    mockedUpdate.mockResolvedValue({})
+
+    const result = await deletePastExpenses()
+
+    expect(result).toEqual({ deletedCount: 101 })
+    expect(mockedUpdate).toHaveBeenCalledTimes(101)
   })
 })

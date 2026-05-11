@@ -127,3 +127,37 @@ export async function countPastExpenses(): Promise<number> {
 
   return count
 }
+
+export async function deletePastExpenses(): Promise<{ deletedCount: number }> {
+  const yearMonth = getCurrentYearMonth()
+  const { start } = getMonthDateRange(yearMonth)
+
+  const ids: string[] = []
+  let cursor: string | undefined = undefined
+  do {
+    const res: any = await notion.databases.query({
+      database_id: DB.EXPENSE,
+      filter: { property: '날짜', date: { before: start } },
+      start_cursor: cursor,
+      page_size: 100,
+    })
+    ids.push(...res.results.map((p: any) => p.id))
+    cursor = res.has_more ? res.next_cursor ?? undefined : undefined
+  } while (cursor)
+
+  let deletedCount = 0
+  try {
+    for (const id of ids) {
+      await notion.pages.update({ page_id: id, in_trash: true })
+      deletedCount++
+    }
+  } catch (e) {
+    revalidatePath('/')
+    revalidatePath('/history')
+    throw new Error(`${deletedCount}건 삭제 후 오류 발생: ${(e as Error).message}`)
+  }
+
+  revalidatePath('/')
+  revalidatePath('/history')
+  return { deletedCount }
+}
