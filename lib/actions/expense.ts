@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { notion, DB } from '@/lib/notion'
-import { getMonthDateRange } from '@/lib/utils/date-range'
+import { getMonthDateRange, getCurrentYearMonth } from '@/lib/utils/date-range'
 import type { Expense } from '@/lib/types'
 
 export async function createExpense(data: {
@@ -106,4 +106,24 @@ export async function deleteExpense(id: string): Promise<void> {
   await notion.pages.update({ page_id: id, in_trash: true })
   revalidatePath('/history')
   revalidatePath('/')
+}
+
+export async function countPastExpenses(): Promise<number> {
+  const yearMonth = getCurrentYearMonth()
+  const { start } = getMonthDateRange(yearMonth)
+
+  let count = 0
+  let cursor: string | undefined = undefined
+  do {
+    const res: any = await notion.databases.query({
+      database_id: DB.EXPENSE,
+      filter: { property: '날짜', date: { before: start } },
+      start_cursor: cursor,
+      page_size: 100,
+    })
+    count += res.results.length
+    cursor = res.has_more ? res.next_cursor ?? undefined : undefined
+  } while (cursor)
+
+  return count
 }
