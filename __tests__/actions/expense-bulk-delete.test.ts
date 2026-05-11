@@ -29,6 +29,15 @@ const mockedUpdate = notion.pages.update as jest.Mock
 
 beforeEach(() => {
   jest.clearAllMocks()
+  // rate-limit sleep을 즉시 실행되도록 대체
+  jest.spyOn(global, 'setTimeout').mockImplementation((fn: TimerHandler) => {
+    if (typeof fn === 'function') fn()
+    return 0 as unknown as ReturnType<typeof setTimeout>
+  })
+})
+
+afterEach(() => {
+  jest.restoreAllMocks()
 })
 
 describe('countPastExpenses', () => {
@@ -143,7 +152,7 @@ describe('deletePastExpenses', () => {
 
     const { revalidatePath } = await import('next/cache')
 
-    await expect(deletePastExpenses()).rejects.toThrow(/1건 삭제 후 오류 발생/)
+    await expect(deletePastExpenses()).rejects.toThrow(/1건 삭제 후 오류가 발생했습니다/)
     expect(revalidatePath).toHaveBeenCalledWith('/')
     expect(revalidatePath).toHaveBeenCalledWith('/history')
   })

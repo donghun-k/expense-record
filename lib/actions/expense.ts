@@ -150,11 +150,13 @@ export async function deletePastExpenses(): Promise<{ deletedCount: number }> {
     for (const id of ids) {
       await notion.pages.update({ page_id: id, in_trash: true })
       deletedCount++
+      // Notion rate limit 방지 (~3 req/s)
+      if (deletedCount < ids.length) await new Promise((r) => setTimeout(r, 350))
     }
   } catch (e) {
     revalidatePath('/')
     revalidatePath('/history')
-    throw new Error(`${deletedCount}건 삭제 후 오류 발생: ${(e as Error).message}`)
+    throw new Error(`${deletedCount}건 삭제 후 오류가 발생했습니다. 다시 시도해주세요.`)
   }
 
   revalidatePath('/')
