@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
-import { CalendarIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { m } from 'motion/react'
 import { Button } from '@/components/ui/button'
@@ -11,9 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+import { DatePicker } from '@/components/ui/date-picker'
 import { createExpense } from '@/lib/actions/expense'
 import { useLoadingAction } from '@/components/loading-provider'
 import type { Account, Category } from '@/lib/types'
@@ -83,26 +79,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <Label>날짜</Label>
-            <Popover>
-              <PopoverTrigger
-                className={cn(
-                  'flex h-9 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                  !date && 'text-muted-foreground'
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, 'yyyy년 MM월 dd일', { locale: ko }) : '날짜 선택'}
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => d && setDate(d)}
-                  initialFocus
-                  locale={ko}
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker value={date} onChange={setDate} />
           </div>
 
           <div className="space-y-1">
