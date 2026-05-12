@@ -141,8 +141,8 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
           {/* 총 합계 (일반 예산 + 고정 지출 모두 있을 때) */}
           {normalStatuses.length > 0 && fixedStatuses.length > 0 && (() => {
             const grandBudget = normalBudgetTotal + fixedTotal
-            const grandSpent = normalSpentTotal
-            const grandRemaining = normalRemainingTotal - fixedTotal
+            const grandSpent = normalSpentTotal + fixedTotal
+            const grandRemaining = grandBudget - grandSpent
             return (
               <>
                 <Separator />
