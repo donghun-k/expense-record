@@ -124,13 +124,6 @@
   --signal-neg-strong: #f87171;
 }
 
-/* Backward-compat aliases — to be removed after primitive components migrate */
-:root, .dark {
-  --glass-bg:     var(--surface);
-  --glass-border: var(--surface-border);
-  --glass-blur:   20px;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
