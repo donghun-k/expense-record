@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import { ThemeProvider } from 'next-themes'
 import './globals.css'
 import { Nav } from '@/components/nav'
@@ -10,7 +10,12 @@ import { LoadingProvider } from '@/components/loading-provider'
 import { NavigationProgressProvider } from '@/components/navigation-progress'
 import { PageTransition } from '@/components/page-transition'
 
-const inter = Inter({ subsets: ['latin'] })
+const pretendard = localFont({
+  src: '../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2',
+  variable: '--font-pretendard',
+  display: 'swap',
+  weight: '45 920',
+})
 
 export const metadata: Metadata = {
   title: '지출 기록',
@@ -18,14 +23,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="ko" suppressHydrationWarning className={pretendard.variable}>
+      <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <MotionProvider>
             <LoadingProvider>
               <NavigationProgressProvider>
                 <Nav />
-                <main className="container mx-auto px-4 py-6">
+                <main className="container mx-auto max-w-3xl px-4 py-6">
                   <PageTransition>{children}</PageTransition>
                 </main>
                 <Toaster />
