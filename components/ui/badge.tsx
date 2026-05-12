@@ -15,7 +15,7 @@ const badgeVariants = cva(
         ok:
           "bg-[var(--signal-pos)]/10 text-[var(--signal-pos)] border-[var(--signal-pos)]/20",
         warn:
-          "bg-[var(--signal-neg)]/12 text-[var(--signal-neg)] border-[var(--signal-neg)]/22",
+          "bg-[var(--signal-neg)]/10 text-[var(--signal-neg)] border-[var(--signal-neg)]/20",
         outline:
           "bg-transparent text-foreground border-[var(--surface-border)]",
       },

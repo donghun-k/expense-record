@@ -50,7 +50,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
   const [editCategoryId, setEditCategoryId] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null)
   const { execute: executeUpdate, isPending: isUpdating } = useLoadingAction()
-  const { execute: executeDelete } = useLoadingAction()
+  const { execute: executeDelete, isPending: isDeleting } = useLoadingAction()
 
   // 서버 props 갱신 시 로컬 상태 동기화
   useEffect(() => {
@@ -283,6 +283,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
         description={deleteTarget ? `${deleteTarget.title} · ${deleteTarget.amount.toLocaleString()}원` : undefined}
         confirmLabel="삭제"
         destructive
+        isPending={isDeleting}
         onConfirm={handleConfirmDelete}
       />
     </>
