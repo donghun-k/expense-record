@@ -137,6 +137,28 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
               </div>
             </>
           )}
+
+          {/* 총 합계 (일반 예산 + 고정 지출 모두 있을 때) */}
+          {normalStatuses.length > 0 && fixedStatuses.length > 0 && (() => {
+            const grandBudget = normalBudgetTotal + fixedTotal
+            const grandSpent = normalSpentTotal
+            const grandRemaining = normalRemainingTotal - fixedTotal
+            return (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">총 합계</span>
+                  <div className="flex flex-wrap justify-end items-center gap-2 gap-y-1 text-sm">
+                    <span className="text-muted-foreground">예산 <AnimatedNumber value={grandBudget} />원</span>
+                    <span className="text-muted-foreground">사용 <AnimatedNumber value={grandSpent} />원</span>
+                    <Badge variant={grandRemaining < 0 ? 'warn' : 'ok'}>
+                      {grandRemaining > 0 ? '+' : ''}<AnimatedNumber value={grandRemaining} />원
+                    </Badge>
+                  </div>
+                </div>
+              </>
+            )
+          })()}
         </CardContent>
       </Card>
     </m.div>
