@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { updateExpense, deleteExpense } from '@/lib/actions/expense'
 import { useLoadingAction } from '@/components/loading-provider'
+import { formatNumber, parseNumber } from '@/lib/utils/number'
 import type { Account, Category, Expense } from '@/lib/types'
 
 interface Props {
@@ -63,14 +64,14 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
     const [y, m, d] = expense.date.split('-').map(Number)
     setEditDate(new Date(y, m - 1, d))
     setEditTitle(expense.title)
-    setEditAmount(String(expense.amount))
+    setEditAmount(formatNumber(String(expense.amount)))
     setEditAccountId(expense.accountId)
     setEditCategoryId(expense.categoryId)
   }
 
   const handleUpdate = () => {
     if (!editingExpense) return
-    const parsedAmount = parseInt(editAmount, 10)
+    const parsedAmount = parseInt(parseNumber(editAmount), 10)
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       toast.error('올바른 금액을 입력해주세요')
       return
@@ -238,7 +239,12 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
             </div>
             <div className="space-y-1">
               <Label>금액 (원)</Label>
-              <Input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} min="1" />
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={editAmount}
+                onChange={(e) => setEditAmount(formatNumber(e.target.value))}
+              />
             </div>
             <div className="space-y-1">
               <Label>계좌</Label>
