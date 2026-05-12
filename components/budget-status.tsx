@@ -73,7 +73,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                     <div className="flex items-center gap-3 text-sm">
                       <span className="text-muted-foreground">예산 <AnimatedNumber value={s.budget} />원</span>
                       <span className="text-muted-foreground">사용 <AnimatedNumber value={s.spent} />원</span>
-                      <Badge variant={s.isOver ? 'destructive' : 'secondary'}>
+                      <Badge variant={s.isOver ? 'warn' : 'ok'}>
                         {s.remaining > 0 ? '+' : ''}<AnimatedNumber value={s.remaining} />원
                       </Badge>
                     </div>
@@ -92,7 +92,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-muted-foreground">예산 <AnimatedNumber value={normalBudgetTotal} />원</span>
                   <span className="text-muted-foreground">사용 <AnimatedNumber value={normalSpentTotal} />원</span>
-                  <Badge variant={normalRemainingTotal < 0 ? 'destructive' : 'secondary'}>
+                  <Badge variant={normalRemainingTotal < 0 ? 'warn' : 'ok'}>
                     {normalRemainingTotal > 0 ? '+' : ''}<AnimatedNumber value={normalRemainingTotal} />원
                   </Badge>
                 </div>
@@ -109,7 +109,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                   {groupIdx > 0 && <Separator className="mb-4" />}
                   <div className="flex items-center gap-2 mb-2">
                     <p className="text-xs font-semibold text-muted-foreground">{group.accountName}</p>
-                    <Badge variant="outline" className="text-xs">고정 지출</Badge>
+                    <Badge variant="fixed" className="text-xs">고정 지출</Badge>
                   </div>
                   <div className="space-y-3">
                     {group.items.map((s) => (
@@ -117,7 +117,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                         <span className="font-medium">{s.categoryName}</span>
                         <div className="flex items-center gap-3 text-sm">
                           <span className="text-muted-foreground"><AnimatedNumber value={s.budget} />원</span>
-                          <Badge variant="outline">고정</Badge>
+                          <Badge variant="fixed">고정</Badge>
                         </div>
                       </div>
                     ))}

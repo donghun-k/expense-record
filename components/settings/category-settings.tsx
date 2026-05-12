@@ -154,7 +154,7 @@ export function CategorySettings({ accounts, categories }: { accounts: Account[]
                     <>
                       <span className="flex-1">
                         {category.name}
-                        {category.isFixed && <Badge variant="outline" className="ml-2 text-xs">고정</Badge>}
+                        {category.isFixed && <Badge variant="fixed" className="ml-2 text-xs">고정</Badge>}
                       </span>
                       <span className="text-sm text-muted-foreground">{accountName}</span>
                       <Button size="sm" variant="outline" onClick={() => { setEditingId(category.id); setEditingName(category.name); setEditingAccountId(category.accountId); setEditingIsFixed(category.isFixed) }}>수정</Button>
