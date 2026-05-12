@@ -70,7 +70,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                 {group.items.map((s) => (
                   <div key={s.categoryId} className="flex items-center justify-between">
                     <span className="font-medium">{s.categoryName}</span>
-                    <div className="flex items-center gap-3 text-sm">
+                    <div className="flex flex-wrap justify-end items-center gap-2 gap-y-1 text-sm">
                       <span className="text-muted-foreground">예산 <AnimatedNumber value={s.budget} />원</span>
                       <span className="text-muted-foreground">사용 <AnimatedNumber value={s.spent} />원</span>
                       <Badge variant={s.isOver ? 'warn' : 'ok'}>
@@ -89,7 +89,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
               <Separator className="border-dashed" />
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-muted-foreground">합계</span>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex flex-wrap justify-end items-center gap-2 gap-y-1 text-sm">
                   <span className="text-muted-foreground">예산 <AnimatedNumber value={normalBudgetTotal} />원</span>
                   <span className="text-muted-foreground">사용 <AnimatedNumber value={normalSpentTotal} />원</span>
                   <Badge variant={normalRemainingTotal < 0 ? 'warn' : 'ok'}>
@@ -115,7 +115,7 @@ export function BudgetStatusCard({ statuses }: { statuses: BudgetStatus[] }) {
                     {group.items.map((s) => (
                       <div key={s.categoryId} className="flex items-center justify-between">
                         <span className="font-medium">{s.categoryName}</span>
-                        <div className="flex items-center gap-3 text-sm">
+                        <div className="flex flex-wrap justify-end items-center gap-2 gap-y-1 text-sm">
                           <span className="text-muted-foreground"><AnimatedNumber value={s.budget} />원</span>
                           <Badge variant="fixed">고정</Badge>
                         </div>
