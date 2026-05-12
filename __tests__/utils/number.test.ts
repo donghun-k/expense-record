@@ -29,3 +29,9 @@ describe('parseNumber', () => {
     expect(parseNumber('')).toBe('')
   })
 })
+
+describe('formatNumber + parseNumber round-trip', () => {
+  it('포맷 후 파싱하면 원래 숫자 문자열로 복원된다', () => {
+    expect(parseNumber(formatNumber('1234567'))).toBe('1234567')
+  })
+})

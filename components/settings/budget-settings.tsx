@@ -22,12 +22,12 @@ interface Props {
 export function BudgetSettings({ categories, currentYearMonth, budgets, hasPreviousMonthBudget }: Props) {
   const [amounts, setAmounts] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
-    budgets.forEach((b) => { init[b.categoryId] = b.amount.toLocaleString() })
+    budgets.forEach((b) => { init[b.categoryId] = formatNumber(String(b.amount)) })
     return init
   })
   const [originalAmounts] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
-    budgets.forEach((b) => { init[b.categoryId] = b.amount.toLocaleString() })
+    budgets.forEach((b) => { init[b.categoryId] = formatNumber(String(b.amount)) })
     return init
   })
   const [savedState, setSavedState] = useState<Record<string, 'saved' | 'dirty' | 'idle'>>({})

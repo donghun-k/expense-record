@@ -1,7 +1,7 @@
 export function formatNumber(value: string): string {
   const num = value.replace(/[^0-9]/g, '')
   if (!num) return ''
-  return parseInt(num, 10).toLocaleString()
+  return parseInt(num, 10).toLocaleString('ko-KR')
 }
 
 export function parseNumber(formatted: string): string {
