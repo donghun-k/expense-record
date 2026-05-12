@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { CalendarIcon } from 'lucide-react'
+import { ReceiptIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { m, AnimatePresence } from 'motion/react'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+import { DatePicker } from '@/components/ui/date-picker'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { updateExpense, deleteExpense } from '@/lib/actions/expense'
 import { useLoadingAction } from '@/components/loading-provider'
 import type { Account, Category, Expense } from '@/lib/types'
@@ -48,6 +48,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
   const [editAmount, setEditAmount] = useState('')
   const [editAccountId, setEditAccountId] = useState('')
   const [editCategoryId, setEditCategoryId] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null)
   const { execute: executeUpdate, isPending: isUpdating } = useLoadingAction()
   const { execute: executeDelete } = useLoadingAction()
 
@@ -91,18 +92,22 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
     })
   }
 
-  const handleDelete = (id: string) => {
-    if (!confirm('이 지출 기록을 삭제하시겠습니까?')) return
-    // 낙관적 삭제
+  const requestDelete = (expense: Expense) => setDeleteTarget(expense)
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return
+    const target = deleteTarget
     const backup = localExpenses
-    setLocalExpenses((prev) => prev.filter((e) => e.id !== id))
+    setLocalExpenses((prev) => prev.filter((e) => e.id !== target.id))
     executeDelete(async () => {
       try {
-        await deleteExpense(id)
+        await deleteExpense(target.id)
         toast.success('지출이 삭제됐습니다')
+        setDeleteTarget(null)
       } catch {
         setLocalExpenses(backup)
         toast.error('지출 삭제에 실패했습니다')
+        setDeleteTarget(null)
       }
     })
   }
@@ -162,25 +167,25 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
           : `총 ${filteredExpenses.length}건 · ${filteredTotal.toLocaleString()}원`
         }
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>날짜</TableHead>
-            <TableHead>사용처</TableHead>
-            <TableHead className="text-right">금액</TableHead>
-            <TableHead>계좌</TableHead>
-            <TableHead>카테고리</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredExpenses.length === 0 ? (
+      {filteredExpenses.length === 0 ? (
+        <EmptyState
+          icon={<ReceiptIcon className="size-5" />}
+          title={(filterAccountId || filterCategoryId) ? '필터 조건에 맞는 기록이 없습니다' : '지출 기록이 없습니다'}
+          description={(filterAccountId || filterCategoryId) ? '필터를 조정해 보세요.' : '이번 달엔 아직 기록된 지출이 없어요.'}
+        />
+      ) : (
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                {(filterAccountId || filterCategoryId) ? '필터 조건에 맞는 기록이 없습니다' : '지출 기록이 없습니다'}
-              </TableCell>
+              <TableHead>날짜</TableHead>
+              <TableHead>사용처</TableHead>
+              <TableHead className="text-right">금액</TableHead>
+              <TableHead>계좌</TableHead>
+              <TableHead>카테고리</TableHead>
+              <TableHead></TableHead>
             </TableRow>
-          ) : (
+          </TableHeader>
+          <TableBody>
             <m.tr
               key={`stagger-${filterAccountId}-${filterCategoryId}`}
               variants={listVariants}
@@ -207,7 +212,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
                       <TableCell>
                         <div className="flex gap-1">
                           <Button size="sm" variant="outline" onClick={() => openEdit(expense)}>수정</Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(expense.id)}>삭제</Button>
+                          <Button size="sm" variant="destructive" onClick={() => requestDelete(expense)}>삭제</Button>
                         </div>
                       </TableCell>
                     </m.tr>
@@ -215,9 +220,9 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
                 })}
               </AnimatePresence>
             </m.tr>
-          )}
-        </TableBody>
-      </Table>
+          </TableBody>
+        </Table>
+      )}
 
       <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
         <DialogContent>
@@ -225,19 +230,7 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
           <div className="space-y-4">
             <div className="space-y-1">
               <Label>날짜</Label>
-              <Popover>
-                <PopoverTrigger
-                  className={cn(
-                    'flex h-9 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(editDate, 'yyyy년 MM월 dd일', { locale: ko })}
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={editDate} onSelect={(d) => d && setEditDate(d)} locale={ko} />
-                </PopoverContent>
-              </Popover>
+              <DatePicker value={editDate} onChange={setEditDate} />
             </div>
             <div className="space-y-1">
               <Label>사용처</Label>
@@ -282,6 +275,16 @@ export function ExpenseList({ expenses, accounts, categories }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => !v && setDeleteTarget(null)}
+        title="지출 기록을 삭제할까요?"
+        description={deleteTarget ? `${deleteTarget.title} · ${deleteTarget.amount.toLocaleString()}원` : undefined}
+        confirmLabel="삭제"
+        destructive
+        onConfirm={handleConfirmDelete}
+      />
     </>
   )
 }
