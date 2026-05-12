@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { createExpense } from '@/lib/actions/expense'
 import { useLoadingAction } from '@/components/loading-provider'
+import { formatNumber, parseNumber } from '@/lib/utils/number'
 import type { Account, Category } from '@/lib/types'
 
 interface Props {
@@ -36,7 +37,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const parsedAmount = parseInt(amount, 10)
+    const parsedAmount = parseInt(parseNumber(amount), 10)
     if (!title.trim() || !accountId || !categoryId) {
       toast.error('모든 필드를 입력해주세요')
       return
@@ -89,7 +90,13 @@ export function ExpenseForm({ accounts, categories }: Props) {
 
           <div className="space-y-1">
             <Label>금액 (원)</Label>
-            <Input type="number" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" />
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={amount}
+              onChange={(e) => setAmount(formatNumber(e.target.value))}
+            />
           </div>
 
           <div className="space-y-1">
