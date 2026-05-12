@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { upsertBudget, copyBudgetFromPreviousMonth } from '@/lib/actions/budget'
 import { useLoadingAction } from '@/components/loading-provider'
+import { formatNumber, parseNumber } from '@/lib/utils/number'
 import type { Budget, Category } from '@/lib/types'
 
 interface Props {
@@ -16,16 +17,6 @@ interface Props {
   currentYearMonth: string
   budgets: Budget[]
   hasPreviousMonthBudget: boolean
-}
-
-function formatNumber(value: string): string {
-  const num = value.replace(/[^0-9]/g, '')
-  if (!num) return ''
-  return parseInt(num, 10).toLocaleString()
-}
-
-function parseNumber(formatted: string): string {
-  return formatted.replace(/,/g, '')
 }
 
 export function BudgetSettings({ categories, currentYearMonth, budgets, hasPreviousMonthBudget }: Props) {
