@@ -34,8 +34,8 @@ const listVariants = {
 
 const rowVariants = {
   hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
-  exit: { opacity: 0, x: -20, transition: { duration: 0.25 } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
 }
 
 export function ExpenseList({ expenses, accounts, categories }: Props) {

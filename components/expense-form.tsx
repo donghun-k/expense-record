@@ -75,7 +75,7 @@ export function ExpenseForm({ accounts, categories }: Props) {
     <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
     >
     <Card>
       <CardHeader><CardTitle>지출 입력</CardTitle></CardHeader>

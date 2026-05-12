@@ -62,7 +62,7 @@ export function SettingsTabs({ accounts, categories, budgets, currentYearMonth, 
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           >
             {activeTab === 'accounts' && <AccountSettings accounts={accounts} />}
             {activeTab === 'categories' && <CategorySettings accounts={accounts} categories={categories} />}
