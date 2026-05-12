@@ -11,34 +11,26 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      position="bottom-center"
+      duration={3500}
       icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        success: <CircleCheckIcon className="size-4 text-[var(--signal-pos)]" />,
+        info: <InfoIcon className="size-4 text-muted-foreground" />,
+        warning: <TriangleAlertIcon className="size-4 text-[var(--signal-neg)]" />,
+        error: <OctagonXIcon className="size-4 text-[var(--signal-neg)]" />,
+        loading: <Loader2Icon className="size-4 animate-spin text-muted-foreground" />,
       }}
       style={
         {
-          "--normal-bg": "var(--glass-bg)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--glass-border)",
+          "--normal-bg": "var(--surface-elevated)",
+          "--normal-text": "var(--foreground)",
+          "--normal-border": "var(--surface-elevated-border)",
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast: "cn-toast backdrop-blur-[24px]",
         },
       }}
       {...props}
