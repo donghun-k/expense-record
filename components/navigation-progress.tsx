@@ -48,10 +48,7 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
             transition={{ duration: 0.3 }}
           >
             <m.div
-              className="h-full bg-white rounded-r-full"
-              style={{
-                boxShadow: '0 0 10px rgba(240, 147, 251, 0.8), 0 0 20px rgba(245, 87, 108, 0.4)',
-              }}
+              className="h-full bg-foreground rounded-r-full"
               initial={{ width: '0%' }}
               animate={{ width: progress < 100 ? '80%' : '100%' }}
               transition={{ duration: progress < 100 ? 0.5 : 0.2, ease: 'easeOut' }}
