@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { notion, DB } from '@/lib/notion'
+import { accountCodec } from '@/lib/notion/account.codec'
 import type { Account } from '@/lib/types'
 
 export async function getAccounts(): Promise<Account[]> {
@@ -10,10 +11,7 @@ export async function getAccounts(): Promise<Account[]> {
     sorts: [{ property: '계좌명', direction: 'ascending' }],
   })
 
-  return response.results.map((page: any) => ({
-    id: page.id,
-    name: page.properties['계좌명'].title[0]?.plain_text ?? '',
-  }))
+  return response.results.map((page: any) => accountCodec.read(page))
 }
 
 export async function createAccount(name: string): Promise<void> {
@@ -21,9 +19,7 @@ export async function createAccount(name: string): Promise<void> {
 
   await notion.pages.create({
     parent: { database_id: DB.ACCOUNT },
-    properties: {
-      '계좌명': { title: [{ text: { content: name.trim() } }] },
-    },
+    properties: accountCodec.write({ name }),
   })
   revalidatePath('/settings')
 }
@@ -33,9 +29,7 @@ export async function updateAccount(id: string, name: string): Promise<void> {
 
   await notion.pages.update({
     page_id: id,
-    properties: {
-      '계좌명': { title: [{ text: { content: name.trim() } }] },
-    },
+    properties: accountCodec.write({ name }),
   })
   revalidatePath('/settings')
 }
