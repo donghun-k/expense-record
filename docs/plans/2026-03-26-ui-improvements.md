@@ -1,7 +1,5 @@
 # UI 개선 4종 구현 계획
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Select 레이블 표시 수정, 숫자 천단위 포맷팅, 예산 저장 상태 표시, 지출 내역 필터 기능 추가
 
 **Architecture:** 4개의 독립적인 클라이언트 사이드 UI 개선. Select 컴포넌트 레벨 수정 후 사용처 반영, 예산 설정에 dirty/saved 상태 추가, 지출 내역에 클라이언트 필터 추가.
