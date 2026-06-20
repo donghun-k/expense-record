@@ -1,4 +1,5 @@
 import type { BudgetRepository } from '@/lib/repositories/budget'
+import type { CategoryRepository } from '@/lib/repositories/category'
 
 /**
  * 예산 upsert 오케스트레이션 (순수, repository 주입).
@@ -16,4 +17,33 @@ export async function upsertBudget(
   } else {
     await repo.create(input)
   }
+}
+
+/**
+ * 이전 달 예산을 대상 달로 복사한다. 카테고리명은 categoryRepo로 한 번에 조회
+ * (기존 per-category retrieve N+1 제거). 복사할 예산이 없으면 false.
+ */
+export async function copyBudgetFromPreviousMonth(
+  budgetRepo: BudgetRepository,
+  categoryRepo: CategoryRepository,
+  targetYearMonth: string,
+  sourceYearMonth: string
+): Promise<boolean> {
+  const sourceBudgets = await budgetRepo.listByMonth(sourceYearMonth)
+  if (sourceBudgets.length === 0) return false
+
+  const nameById = new Map((await categoryRepo.list()).map((c) => [c.id, c.name]))
+
+  await Promise.all(
+    sourceBudgets.map((b) =>
+      upsertBudget(budgetRepo, {
+        yearMonth: targetYearMonth,
+        categoryId: b.categoryId,
+        amount: b.amount,
+        categoryName: nameById.get(b.categoryId) ?? '',
+      })
+    )
+  )
+
+  return true
 }
