@@ -42,3 +42,9 @@ describe('budgetCodec.write', () => {
     })
   })
 })
+
+describe('budgetCodec.writeAmount', () => {
+  it('예산금액만 담은 부분 properties를 만든다', () => {
+    expect(budgetCodec.writeAmount(70000)).toEqual({ '예산금액': { number: 70000 } })
+  })
+})

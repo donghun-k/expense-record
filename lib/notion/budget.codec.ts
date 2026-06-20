@@ -25,4 +25,11 @@ export const budgetCodec = {
       '카테고리': { relation: [{ id: input.categoryId }] },
     }
   },
+
+  /** encode: 예산금액만 갱신하는 부분 properties (upsert의 update 경로용) */
+  writeAmount(amount: number) {
+    return {
+      '예산금액': { number: amount },
+    }
+  },
 }

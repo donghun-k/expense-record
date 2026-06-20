@@ -1,21 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { notion, DB } from '@/lib/notion'
-import { budgetCodec } from '@/lib/notion/budget.codec'
+import { notion } from '@/lib/notion'
 import { categoryCodec } from '@/lib/notion/category.codec'
+import { budgetRepo } from '@/lib/repositories/budget'
+import { upsertBudget as upsertBudgetCore } from '@/lib/core/budget'
 import type { Budget } from '@/lib/types'
 
 export async function getBudgetsByMonth(yearMonth: string): Promise<Budget[]> {
-  const response = await notion.databases.query({
-    database_id: DB.BUDGET,
-    filter: {
-      property: '연월',
-      rich_text: { equals: yearMonth },
-    },
-  })
-
-  return response.results.map((page: any) => budgetCodec.read(page))
+  return budgetRepo.listByMonth(yearMonth)
 }
 
 export async function upsertBudget(
@@ -24,32 +17,7 @@ export async function upsertBudget(
   amount: number,
   categoryName: string
 ): Promise<void> {
-  if (isNaN(amount) || amount < 0) throw new Error('올바른 예산 금액을 입력해주세요')
-
-  const existing = await notion.databases.query({
-    database_id: DB.BUDGET,
-    filter: {
-      and: [
-        { property: '연월', rich_text: { equals: yearMonth } },
-        { property: '카테고리', relation: { contains: categoryId } },
-      ],
-    },
-  })
-
-  if (existing.results.length > 0) {
-    await notion.pages.update({
-      page_id: existing.results[0].id,
-      properties: {
-        '예산금액': { number: amount },
-      },
-    })
-  } else {
-    await notion.pages.create({
-      parent: { database_id: DB.BUDGET },
-      properties: budgetCodec.write({ yearMonth, categoryId, amount, categoryName }),
-    })
-  }
-
+  await upsertBudgetCore(budgetRepo, { yearMonth, categoryId, amount, categoryName })
   revalidatePath('/settings')
   revalidatePath('/')
 }
