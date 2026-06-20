@@ -8,8 +8,7 @@ import { ExpenseForm } from '@/components/expense-form'
 import { BudgetStatusCard } from '@/components/budget-status'
 import { PageHeader } from '@/components/page-header'
 import { Skeleton } from '@/components/ui/skeleton'
-import { calculateBudgetStatus, groupExpensesByCategory } from '@/lib/utils/budget'
-import type { BudgetStatus } from '@/lib/types'
+import { buildBudgetStatuses } from '@/lib/utils/budget'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,40 +27,7 @@ async function HomeContent() {
     getExpensesByMonth(currentYearMonth),
   ])
 
-  const spentByCategory = groupExpensesByCategory(expenses)
-
-  const budgetStatuses: BudgetStatus[] = budgets
-    .map((b) => {
-      const category = categories.find((c) => c.id === b.categoryId)
-      if (!category) return null
-      const account = accounts.find((a) => a.id === category.accountId)
-      if (!account) return null
-
-      if (category.isFixed) {
-        return {
-          categoryId: b.categoryId,
-          categoryName: category.name,
-          accountId: account.id,
-          accountName: account.name,
-          budget: b.amount,
-          spent: b.amount,
-          remaining: 0,
-          isOver: false,
-          isFixed: true,
-        }
-      }
-
-      const spent = spentByCategory[b.categoryId] ?? 0
-      return {
-        categoryId: b.categoryId,
-        categoryName: category.name,
-        accountId: account.id,
-        accountName: account.name,
-        ...calculateBudgetStatus(b.amount, spent),
-        isFixed: false,
-      }
-    })
-    .filter((s): s is BudgetStatus => s !== null)
+  const budgetStatuses = buildBudgetStatuses(budgets, categories, accounts, expenses)
 
   return (
     <div className="space-y-5">
