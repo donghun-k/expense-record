@@ -23,5 +23,8 @@ export function createInMemoryCategoryRepository(
       const c = store.find((x) => x.id === id)
       if (c) Object.assign(c, { name: input.name.trim(), accountId: input.accountId, isFixed: input.isFixed })
     },
+    async existsByAccount(accountId) {
+      return store.some((c) => c.accountId === accountId)
+    },
   }
 }

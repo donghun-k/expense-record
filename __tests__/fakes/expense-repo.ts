@@ -33,5 +33,8 @@ export function createInMemoryExpenseRepository(
       for (const e of before) store.splice(store.indexOf(e), 1)
       return { deletedCount: before.length }
     },
+    async existsByAccount(accountId) {
+      return store.some((e) => e.accountId === accountId)
+    },
   }
 }

@@ -23,5 +23,9 @@ export function createInMemoryAccountRepository(
       const acc = store.find((a) => a.id === id)
       if (acc) acc.name = input.name.trim()
     },
+    async softDelete(id) {
+      const i = store.findIndex((a) => a.id === id)
+      if (i >= 0) store.splice(i, 1)
+    },
   }
 }

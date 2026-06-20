@@ -5,12 +5,14 @@ import type { Account } from '@/lib/types'
 /**
  * 계좌 저장/조회 port. NotionAccountRepository(prod)와
  * InMemoryAccountRepository(test, __tests__/fakes/)가 구현한다.
- * 메서드는 실제 호출자가 있는 것만 둔다 — softDelete(삭제 가드)는 후보 3.
+ * 메서드는 실제 호출자가 있는 것만 둔다.
  */
 export interface AccountRepository {
   list(): Promise<Account[]>
   create(input: { name: string }): Promise<void>
   update(id: string, input: { name: string }): Promise<void>
+  /** 삭제 가드(core/account)가 참조 검증을 통과한 뒤 호출한다. */
+  softDelete(id: string): Promise<void>
 }
 
 /** Notion adapter. codec을 내부 호출한다. client는 adapter 테스트용으로 주입 가능. */
@@ -37,6 +39,9 @@ export function createNotionAccountRepository(
         page_id: id,
         properties: accountCodec.write(input),
       })
+    },
+    async softDelete(id) {
+      await client.pages.update({ page_id: id, in_trash: true })
     },
   }
 }
