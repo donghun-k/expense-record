@@ -5,7 +5,12 @@ import { notion, DB } from '@/lib/notion'
 import { expenseCodec } from '@/lib/notion/expense.codec'
 import { accountCodec } from '@/lib/notion/account.codec'
 import { categoryCodec } from '@/lib/notion/category.codec'
-import { getMonthDateRange, getCurrentYearMonth } from '@/lib/utils/date-range'
+import { getMonthDateRange } from '@/lib/utils/date-range'
+import { expenseRepo, PartialDeletionError } from '@/lib/repositories/expense'
+import {
+  countPastExpenses as countPastExpensesCore,
+  deletePastExpenses as deletePastExpensesCore,
+} from '@/lib/core/expense'
 import type { Expense } from '@/lib/types'
 
 export async function createExpense(data: {
@@ -20,10 +25,7 @@ export async function createExpense(data: {
   if (!data.accountId) throw new Error('계좌를 선택해주세요')
   if (!data.categoryId) throw new Error('카테고리를 선택해주세요')
 
-  await notion.pages.create({
-    parent: { database_id: DB.EXPENSE },
-    properties: expenseCodec.write(data),
-  })
+  await expenseRepo.create(data)
   revalidatePath('/')
   revalidatePath('/history')
 }
@@ -73,73 +75,30 @@ export async function updateExpense(
   if (!data.accountId) throw new Error('계좌를 선택해주세요')
   if (!data.categoryId) throw new Error('카테고리를 선택해주세요')
 
-  await notion.pages.update({
-    page_id: id,
-    properties: expenseCodec.write(data),
-  })
+  await expenseRepo.update(id, data)
   revalidatePath('/history')
   revalidatePath('/')
 }
 
 export async function deleteExpense(id: string): Promise<void> {
   if (!id) throw new Error('항목을 찾을 수 없습니다')
-  await notion.pages.update({ page_id: id, in_trash: true })
+  await expenseRepo.softDelete(id)
   revalidatePath('/history')
   revalidatePath('/')
 }
 
 export async function countPastExpenses(): Promise<number> {
-  const yearMonth = getCurrentYearMonth()
-  const { start } = getMonthDateRange(yearMonth)
-
-  let count = 0
-  let cursor: string | undefined = undefined
-  do {
-    const res: any = await notion.databases.query({
-      database_id: DB.EXPENSE,
-      filter: { property: '날짜', date: { before: start } },
-      start_cursor: cursor,
-      page_size: 100,
-    })
-    count += res.results.length
-    cursor = res.has_more ? res.next_cursor ?? undefined : undefined
-  } while (cursor)
-
-  return count
+  return countPastExpensesCore(expenseRepo, new Date())
 }
 
 export async function deletePastExpenses(): Promise<{ deletedCount: number }> {
-  const yearMonth = getCurrentYearMonth()
-  const { start } = getMonthDateRange(yearMonth)
-
-  const ids: string[] = []
-  let cursor: string | undefined = undefined
-  do {
-    const res: any = await notion.databases.query({
-      database_id: DB.EXPENSE,
-      filter: { property: '날짜', date: { before: start } },
-      start_cursor: cursor,
-      page_size: 100,
-    })
-    ids.push(...res.results.map((p: any) => p.id))
-    cursor = res.has_more ? res.next_cursor ?? undefined : undefined
-  } while (cursor)
-
-  let deletedCount = 0
   try {
-    for (const id of ids) {
-      await notion.pages.update({ page_id: id, in_trash: true })
-      deletedCount++
-      // Notion rate limit 방지 (~3 req/s)
-      if (deletedCount < ids.length) await new Promise((r) => setTimeout(r, 350))
-    }
+    return await deletePastExpensesCore(expenseRepo, new Date())
   } catch (e) {
+    const count = e instanceof PartialDeletionError ? e.deletedCount : 0
+    throw new Error(`${count}건 삭제 후 오류가 발생했습니다. 다시 시도해주세요.`)
+  } finally {
     revalidatePath('/')
     revalidatePath('/history')
-    throw new Error(`${deletedCount}건 삭제 후 오류가 발생했습니다. 다시 시도해주세요.`)
   }
-
-  revalidatePath('/')
-  revalidatePath('/history')
-  return { deletedCount }
 }
