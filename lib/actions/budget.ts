@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { notion, DB } from '@/lib/notion'
+import { budgetCodec } from '@/lib/notion/budget.codec'
+import { categoryCodec } from '@/lib/notion/category.codec'
 import type { Budget } from '@/lib/types'
 
 export async function getBudgetsByMonth(yearMonth: string): Promise<Budget[]> {
@@ -13,12 +15,7 @@ export async function getBudgetsByMonth(yearMonth: string): Promise<Budget[]> {
     },
   })
 
-  return response.results.map((page: any) => ({
-    id: page.id,
-    yearMonth: page.properties['연월'].rich_text[0]?.plain_text ?? '',
-    amount: page.properties['예산금액'].number ?? 0,
-    categoryId: page.properties['카테고리'].relation[0]?.id ?? '',
-  }))
+  return response.results.map((page: any) => budgetCodec.read(page))
 }
 
 export async function upsertBudget(
@@ -49,12 +46,7 @@ export async function upsertBudget(
   } else {
     await notion.pages.create({
       parent: { database_id: DB.BUDGET },
-      properties: {
-        '이름': { title: [{ text: { content: `${yearMonth} ${categoryName}` } }] },
-        '연월': { rich_text: [{ text: { content: yearMonth } }] },
-        '예산금액': { number: amount },
-        '카테고리': { relation: [{ id: categoryId }] },
-      },
+      properties: budgetCodec.write({ yearMonth, categoryId, amount, categoryName }),
     })
   }
 
@@ -71,8 +63,8 @@ export async function copyBudgetFromPreviousMonth(
 
   await Promise.all(
     sourceBudgets.map(async (b) => {
-      const categoryPage = await notion.pages.retrieve({ page_id: b.categoryId }) as any
-      const categoryName = categoryPage.properties['카테고리명'].title[0]?.plain_text ?? ''
+      const categoryPage = await notion.pages.retrieve({ page_id: b.categoryId })
+      const categoryName = categoryCodec.read(categoryPage).name
       await upsertBudget(targetYearMonth, b.categoryId, b.amount, categoryName)
     })
   )
