@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { notion, DB } from '@/lib/notion'
+import { categoryCodec } from '@/lib/notion/category.codec'
 import type { Category } from '@/lib/types'
 
 export async function getCategories(accountId?: string): Promise<Category[]> {
@@ -15,12 +16,7 @@ export async function getCategories(accountId?: string): Promise<Category[]> {
     sorts: [{ property: '카테고리명', direction: 'ascending' }],
   })
 
-  return response.results.map((page: any) => ({
-    id: page.id,
-    name: page.properties['카테고리명'].title[0]?.plain_text ?? '',
-    accountId: page.properties['계좌'].relation[0]?.id ?? '',
-    isFixed: page.properties['고정여부']?.checkbox ?? false,
-  }))
+  return response.results.map((page: any) => categoryCodec.read(page))
 }
 
 export async function createCategory(name: string, accountId: string, isFixed: boolean = false): Promise<void> {
@@ -29,11 +25,7 @@ export async function createCategory(name: string, accountId: string, isFixed: b
 
   await notion.pages.create({
     parent: { database_id: DB.CATEGORY },
-    properties: {
-      '카테고리명': { title: [{ text: { content: name.trim() } }] },
-      '계좌': { relation: [{ id: accountId }] },
-      '고정여부': { checkbox: isFixed },
-    },
+    properties: categoryCodec.write({ name, accountId, isFixed }),
   })
   revalidatePath('/settings')
   revalidatePath('/')
@@ -44,11 +36,7 @@ export async function updateCategory(id: string, name: string, accountId: string
 
   await notion.pages.update({
     page_id: id,
-    properties: {
-      '카테고리명': { title: [{ text: { content: name.trim() } }] },
-      '계좌': { relation: [{ id: accountId }] },
-      '고정여부': { checkbox: isFixed },
-    },
+    properties: categoryCodec.write({ name, accountId, isFixed }),
   })
   revalidatePath('/settings')
   revalidatePath('/')
