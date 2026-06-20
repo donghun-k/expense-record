@@ -32,5 +32,10 @@ export function createInMemoryBudgetRepository(
       const b = store.find((x) => x.id === id)
       if (b) b.amount = amount
     },
+    async softDeleteByCategory(categoryId) {
+      for (const b of store.filter((x) => x.categoryId === categoryId)) {
+        store.splice(store.indexOf(b), 1)
+      }
+    },
   }
 }

@@ -10,6 +10,11 @@ export interface BudgetRepository {
   findByMonthAndCategory(yearMonth: string, categoryId: string): Promise<Budget | null>
   create(input: { yearMonth: string; categoryId: string; amount: number; categoryName: string }): Promise<void>
   updateAmount(id: string, amount: number): Promise<void>
+  /**
+   * 카테고리 삭제 cascade(core/category): 이 카테고리를 참조하는 예산을 전부 삭제한다.
+   * pagination으로 전체 수집 후 병렬 삭제. 하나라도 실패하면 throw(core가 catch).
+   */
+  softDeleteByCategory(categoryId: string): Promise<void>
 }
 
 export function createNotionBudgetRepository(
@@ -48,6 +53,22 @@ export function createNotionBudgetRepository(
         page_id: id,
         properties: budgetCodec.writeAmount(amount),
       })
+    },
+    async softDeleteByCategory(categoryId) {
+      const ids: string[] = []
+      let cursor: string | undefined = undefined
+      do {
+        const res: any = await client.databases.query({
+          database_id: dbId,
+          filter: { property: '카테고리', relation: { contains: categoryId } },
+          start_cursor: cursor,
+          page_size: 100,
+        })
+        ids.push(...res.results.map((b: any) => b.id))
+        cursor = res.has_more ? res.next_cursor ?? undefined : undefined
+      } while (cursor)
+
+      await Promise.all(ids.map((id) => client.pages.update({ page_id: id, in_trash: true })))
     },
   }
 }

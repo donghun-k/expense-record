@@ -26,5 +26,9 @@ export function createInMemoryCategoryRepository(
     async existsByAccount(accountId) {
       return store.some((c) => c.accountId === accountId)
     },
+    async softDelete(id) {
+      const i = store.findIndex((c) => c.id === id)
+      if (i >= 0) store.splice(i, 1)
+    },
   }
 }

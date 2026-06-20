@@ -29,6 +29,8 @@ export interface ExpenseRepository {
   softDeleteBefore(date: string): Promise<{ deletedCount: number }>
   /** 계좌 삭제 가드(core/account): 이 계좌를 참조하는 지출이 하나라도 있나? */
   existsByAccount(accountId: string): Promise<boolean>
+  /** 카테고리 삭제 가드(core/category): 이 카테고리를 참조하는 지출이 하나라도 있나? */
+  existsByCategory(categoryId: string): Promise<boolean>
 }
 
 export function createNotionExpenseRepository(
@@ -94,6 +96,14 @@ export function createNotionExpenseRepository(
       const res = await client.databases.query({
         database_id: dbId,
         filter: { property: '계좌', relation: { contains: accountId } },
+        page_size: 1,
+      })
+      return res.results.length > 0
+    },
+    async existsByCategory(categoryId) {
+      const res = await client.databases.query({
+        database_id: dbId,
+        filter: { property: '카테고리', relation: { contains: categoryId } },
         page_size: 1,
       })
       return res.results.length > 0

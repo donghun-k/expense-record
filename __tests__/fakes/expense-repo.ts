@@ -36,5 +36,8 @@ export function createInMemoryExpenseRepository(
     async existsByAccount(accountId) {
       return store.some((e) => e.accountId === accountId)
     },
+    async existsByCategory(categoryId) {
+      return store.some((e) => e.categoryId === categoryId)
+    },
   }
 }

@@ -11,6 +11,8 @@ export interface CategoryRepository {
   update(id: string, input: { name: string; accountId: string; isFixed: boolean }): Promise<void>
   /** 계좌 삭제 가드(core/account): 이 계좌를 참조하는 카테고리가 하나라도 있나? */
   existsByAccount(accountId: string): Promise<boolean>
+  /** 삭제 가드(core/category)가 참조 검증·cascade를 통과한 뒤 호출한다. */
+  softDelete(id: string): Promise<void>
 }
 
 export function createNotionCategoryRepository(
@@ -45,6 +47,9 @@ export function createNotionCategoryRepository(
         page_size: 1,
       })
       return res.results.length > 0
+    },
+    async softDelete(id) {
+      await client.pages.update({ page_id: id, in_trash: true })
     },
   }
 }
