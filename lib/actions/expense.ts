@@ -2,6 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { notion, DB } from '@/lib/notion'
+import { expenseCodec } from '@/lib/notion/expense.codec'
+import { accountCodec } from '@/lib/notion/account.codec'
+import { categoryCodec } from '@/lib/notion/category.codec'
 import { getMonthDateRange, getCurrentYearMonth } from '@/lib/utils/date-range'
 import type { Expense } from '@/lib/types'
 
@@ -19,13 +22,7 @@ export async function createExpense(data: {
 
   await notion.pages.create({
     parent: { database_id: DB.EXPENSE },
-    properties: {
-      '사용처': { title: [{ text: { content: data.title.trim() } }] },
-      '금액': { number: data.amount },
-      '날짜': { date: { start: data.date } },
-      '계좌': { relation: [{ id: data.accountId }] },
-      '카테고리': { relation: [{ id: data.categoryId }] },
-    },
+    properties: expenseCodec.write(data),
   })
   revalidatePath('/')
   revalidatePath('/history')
@@ -45,36 +42,25 @@ export async function getExpensesByMonth(yearMonth: string): Promise<Expense[]> 
     sorts: [{ property: '날짜', direction: 'descending' }],
   })
 
-  // 계좌/카테고리명 조회를 위해 accounts, categories를 별도 fetch
-  const accountIds = [...new Set(response.results.map((p: any) => p.properties['계좌'].relation[0]?.id).filter(Boolean))]
-  const categoryIds = [...new Set(response.results.map((p: any) => p.properties['카테고리'].relation[0]?.id).filter(Boolean))]
+  const rows = response.results.map((page: any) => expenseCodec.read(page))
+
+  // 계좌/카테고리명 hydration을 위해 별도 fetch (후보 5에서 N+1 제거 예정)
+  const accountIds = [...new Set(rows.map((r) => r.accountId).filter(Boolean))]
+  const categoryIds = [...new Set(rows.map((r) => r.categoryId).filter(Boolean))]
 
   const [accountPages, categoryPages] = await Promise.all([
-    Promise.all(accountIds.map((id) => notion.pages.retrieve({ page_id: id as string }) as any)),
-    Promise.all(categoryIds.map((id) => notion.pages.retrieve({ page_id: id as string }) as any)),
+    Promise.all(accountIds.map((id) => notion.pages.retrieve({ page_id: id }))),
+    Promise.all(categoryIds.map((id) => notion.pages.retrieve({ page_id: id }))),
   ])
 
-  const accountMap = Object.fromEntries(
-    accountPages.map((p: any) => [p.id, p.properties['계좌명'].title[0]?.plain_text ?? ''])
-  )
-  const categoryMap = Object.fromEntries(
-    categoryPages.map((p: any) => [p.id, p.properties['카테고리명'].title[0]?.plain_text ?? ''])
-  )
+  const accountMap = Object.fromEntries(accountPages.map((p) => [p.id, accountCodec.read(p).name]))
+  const categoryMap = Object.fromEntries(categoryPages.map((p) => [p.id, categoryCodec.read(p).name]))
 
-  return response.results.map((page: any) => {
-    const accountId = page.properties['계좌'].relation[0]?.id ?? ''
-    const categoryId = page.properties['카테고리'].relation[0]?.id ?? ''
-    return {
-      id: page.id,
-      title: page.properties['사용처'].title[0]?.plain_text ?? '',
-      amount: page.properties['금액'].number ?? 0,
-      date: page.properties['날짜'].date?.start ?? '',
-      accountId,
-      accountName: accountMap[accountId] ?? '',
-      categoryId,
-      categoryName: categoryMap[categoryId] ?? '',
-    }
-  })
+  return rows.map((row) => ({
+    ...row,
+    accountName: accountMap[row.accountId] ?? '',
+    categoryName: categoryMap[row.categoryId] ?? '',
+  }))
 }
 
 export async function updateExpense(
@@ -89,13 +75,7 @@ export async function updateExpense(
 
   await notion.pages.update({
     page_id: id,
-    properties: {
-      '사용처': { title: [{ text: { content: data.title.trim() } }] },
-      '금액': { number: data.amount },
-      '날짜': { date: { start: data.date } },
-      '계좌': { relation: [{ id: data.accountId }] },
-      '카테고리': { relation: [{ id: data.categoryId }] },
-    },
+    properties: expenseCodec.write(data),
   })
   revalidatePath('/history')
   revalidatePath('/')

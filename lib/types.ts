@@ -28,6 +28,12 @@ export interface Expense {
   categoryName: string
 }
 
+/**
+ * 지출 페이지에 실제로 보이는 필드만 담은 타입(expenseCodec.read의 반환값).
+ * 계좌명/카테고리명은 페이지에 없으므로 별도 join(이름 hydration)으로 채워 Expense가 된다.
+ */
+export type ExpenseRow = Omit<Expense, 'accountName' | 'categoryName'>
+
 export interface BudgetStatus {
   categoryId: string
   categoryName: string
