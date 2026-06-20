@@ -2,35 +2,24 @@
 
 import { revalidatePath } from 'next/cache'
 import { notion, DB } from '@/lib/notion'
-import { accountCodec } from '@/lib/notion/account.codec'
+import { accountRepo } from '@/lib/repositories/account'
 import type { Account } from '@/lib/types'
 
 export async function getAccounts(): Promise<Account[]> {
-  const response = await notion.databases.query({
-    database_id: DB.ACCOUNT,
-    sorts: [{ property: '계좌명', direction: 'ascending' }],
-  })
-
-  return response.results.map((page: any) => accountCodec.read(page))
+  return accountRepo.list()
 }
 
 export async function createAccount(name: string): Promise<void> {
   if (!name.trim()) throw new Error('계좌명을 입력해주세요')
 
-  await notion.pages.create({
-    parent: { database_id: DB.ACCOUNT },
-    properties: accountCodec.write({ name }),
-  })
+  await accountRepo.create({ name })
   revalidatePath('/settings')
 }
 
 export async function updateAccount(id: string, name: string): Promise<void> {
   if (!name.trim()) throw new Error('계좌명을 입력해주세요')
 
-  await notion.pages.update({
-    page_id: id,
-    properties: accountCodec.write({ name }),
-  })
+  await accountRepo.update(id, { name })
   revalidatePath('/settings')
 }
 
