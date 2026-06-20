@@ -8,7 +8,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        "flex h-9 w-full min-w-0 rounded-md border border-[var(--surface-subtle-border)] bg-[var(--surface-subtle)] px-3 py-1 text-sm text-foreground backdrop-blur-[16px] transition-colors outline-none",
+        // 모바일은 16px(text-base)로 iOS 포커스 줌 방지, 데스크톱은 14px(md:text-sm) 컴팩트 유지
+        "flex h-9 w-full min-w-0 rounded-md border border-[var(--surface-subtle-border)] bg-[var(--surface-subtle)] px-3 py-1 text-base text-foreground backdrop-blur-[16px] transition-colors outline-none md:text-sm",
         "placeholder:text-muted-foreground",
         "selection:bg-foreground selection:text-background",
         "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
