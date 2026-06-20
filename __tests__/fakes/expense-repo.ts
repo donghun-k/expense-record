@@ -25,6 +25,12 @@ export function createInMemoryExpenseRepository(
       const i = store.findIndex((e) => e.id === id)
       if (i >= 0) store.splice(i, 1)
     },
+    async listByDateRange(start, end) {
+      return store
+        .filter((e) => e.date >= start && e.date <= end)
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map((e) => ({ ...e }))
+    },
     async countBefore(date) {
       return store.filter((e) => e.date < date).length
     },

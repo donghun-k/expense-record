@@ -1,15 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { notion, DB } from '@/lib/notion'
-import { expenseCodec } from '@/lib/notion/expense.codec'
-import { accountCodec } from '@/lib/notion/account.codec'
-import { categoryCodec } from '@/lib/notion/category.codec'
-import { getMonthDateRange } from '@/lib/utils/date-range'
 import { expenseRepo, PartialDeletionError } from '@/lib/repositories/expense'
+import { accountRepo } from '@/lib/repositories/account'
+import { categoryRepo } from '@/lib/repositories/category'
 import {
   countPastExpenses as countPastExpensesCore,
   deletePastExpenses as deletePastExpensesCore,
+  listExpensesByMonth as listExpensesByMonthCore,
 } from '@/lib/core/expense'
 import type { Expense } from '@/lib/types'
 
@@ -31,38 +29,7 @@ export async function createExpense(data: {
 }
 
 export async function getExpensesByMonth(yearMonth: string): Promise<Expense[]> {
-  const { start: startDate, end: endDate } = getMonthDateRange(yearMonth)
-
-  const response = await notion.databases.query({
-    database_id: DB.EXPENSE,
-    filter: {
-      and: [
-        { property: '날짜', date: { on_or_after: startDate } },
-        { property: '날짜', date: { on_or_before: endDate } },
-      ],
-    },
-    sorts: [{ property: '날짜', direction: 'descending' }],
-  })
-
-  const rows = response.results.map((page: any) => expenseCodec.read(page))
-
-  // 계좌/카테고리명 hydration을 위해 별도 fetch (후보 5에서 N+1 제거 예정)
-  const accountIds = [...new Set(rows.map((r) => r.accountId).filter(Boolean))]
-  const categoryIds = [...new Set(rows.map((r) => r.categoryId).filter(Boolean))]
-
-  const [accountPages, categoryPages] = await Promise.all([
-    Promise.all(accountIds.map((id) => notion.pages.retrieve({ page_id: id }))),
-    Promise.all(categoryIds.map((id) => notion.pages.retrieve({ page_id: id }))),
-  ])
-
-  const accountMap = Object.fromEntries(accountPages.map((p) => [p.id, accountCodec.read(p).name]))
-  const categoryMap = Object.fromEntries(categoryPages.map((p) => [p.id, categoryCodec.read(p).name]))
-
-  return rows.map((row) => ({
-    ...row,
-    accountName: accountMap[row.accountId] ?? '',
-    categoryName: categoryMap[row.categoryId] ?? '',
-  }))
+  return listExpensesByMonthCore(expenseRepo, accountRepo, categoryRepo, yearMonth)
 }
 
 export async function updateExpense(

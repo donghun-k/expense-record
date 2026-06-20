@@ -1,5 +1,6 @@
 import { notion, DB } from '@/lib/notion'
 import { expenseCodec } from '@/lib/notion/expense.codec'
+import type { ExpenseRow } from '@/lib/types'
 
 type ExpenseInput = {
   title: string
@@ -18,13 +19,15 @@ export class PartialDeletionError extends Error {
 }
 
 /**
- * 지출 저장/조회 port. pagination·rate-limit을 메서드 뒤로 흡수한다.
- * (listByDateRange/이름 hydration은 후보 5.)
+ * 지출 저장/조회 port. pagination·rate-limit·정렬을 메서드 뒤로 흡수한다.
+ * 이름(계좌명/카테고리명)은 페이지에 없으므로 repo는 ExpenseRow까지만 — hydration은 core.
  */
 export interface ExpenseRepository {
   create(input: ExpenseInput): Promise<void>
   update(id: string, input: ExpenseInput): Promise<void>
   softDelete(id: string): Promise<void>
+  /** 기간 내 지출을 날짜 내림차순으로 조회한다(이름 제외). 이름 join은 core/expense. */
+  listByDateRange(start: string, end: string): Promise<ExpenseRow[]>
   countBefore(date: string): Promise<number>
   softDeleteBefore(date: string): Promise<{ deletedCount: number }>
   /** 계좌 삭제 가드(core/account): 이 계좌를 참조하는 지출이 하나라도 있나? */
@@ -49,6 +52,19 @@ export function createNotionExpenseRepository(
     },
     async softDelete(id) {
       await client.pages.update({ page_id: id, in_trash: true })
+    },
+    async listByDateRange(start, end) {
+      const res = await client.databases.query({
+        database_id: dbId,
+        filter: {
+          and: [
+            { property: '날짜', date: { on_or_after: start } },
+            { property: '날짜', date: { on_or_before: end } },
+          ],
+        },
+        sorts: [{ property: '날짜', direction: 'descending' }],
+      })
+      return res.results.map((page: any) => expenseCodec.read(page))
     },
     async countBefore(date) {
       let count = 0
