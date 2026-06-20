@@ -19,3 +19,8 @@ expense-record의 ubiquitous language. 코드·문서·커밋·아키텍처 리�
   - 입력은 `any`(untyped Notion 페이지)를 허용하는 유일한 자리이고, 출력은 엄격한 도메인 타입이다. codec 바깥에 `page.properties...`나 `any`가 보이면 누수(leak) 신호다.
   - **adapter와 구분**: codec은 "형태 변환", adapter는 "seam을 채우는 것". 미래의 NotionRepo가 adapter 자리를 차지하며 내부에서 codec을 호출한다.
 - **ExpenseRow** — 지출 페이지에 **실제로 보이는 필드만** 담은 타입(`Omit<Expense, 'accountName'|'categoryName'>`). `expenseCodec.read`의 반환값. 계좌명/카테고리명은 페이지에 없으므로 별도 join(이름 hydration)으로 채워 `Expense`가 된다.
+- **repository** — 한 entity의 저장/조회를 **도메인 형태**로 표현한 port(interface). `list`/`create`/`update`/`softDeleteBefore` 같은 도메인 명사·동사로, filter·sort·pagination·rate-limit·codec 호출을 흡수한다(제네릭 CRUD가 아니다). `NotionXRepository`(prod adapter)와 `InMemoryXRepository`(test adapter, `__tests__/fakes/`) 두 adapter가 구현한다. interface와 Notion adapter는 `lib/repositories/`에 함께 거주. **메서드는 실제 호출자가 있을 때만 추가**한다(speculative method 금지).
+  - **codec과 구분**: codec은 페이지 ↔ 도메인 *형태 변환*, repository는 *저장/조회 연산*. NotionRepo는 내부에서 codec을 호출한다.
+- **functional core / imperative shell** — 오케스트레이션 로직은 repository를 주입받는 **순수 함수**(`lib/core/`)에 둔다(core). `'use server'` action은 Notion adapter(`xRepo` 싱글턴)를 주입하고 `revalidatePath`만 부르는 얇은 shell이다. core는 `revalidatePath`를 모른다 → 테스트가 mock 0개.
+  - **규칙**: 단일 repo 호출로 끝나는 pass-through는 action이 repo를 직접 부른다(core 없음). core는 오케스트레이션이 실제로 있는 곳에만 생긴다. validation은 그 로직의 home을 따라간다.
+  - 세 디렉터리 역할: `lib/notion/`(codec·client) · `lib/repositories/`(port + Notion adapter) · `lib/core/`(순수 오케스트레이션).
