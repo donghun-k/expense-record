@@ -68,3 +68,17 @@ NOTION_BUDGET_DB_ID
 ## 경로 별칭
 
 `@/*` → 프로젝트 루트 (`./`)
+
+## Agent skills
+
+### Issue tracker
+
+이슈와 PRD는 GitHub Issues(`donghun-k/expense-record`)에 `gh` CLI로 관리한다. 외부 PR은 트리아지 대상이 아니다. `docs/agents/issue-tracker.md` 참조.
+
+### Triage labels
+
+솔로 워크플로우에 맞춘 라벨: `triage` / `blocked` / `agent-ready` / `todo` / `wontfix`. `docs/agents/triage-labels.md` 참조.
+
+### Domain docs
+
+단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. `docs/agents/domain.md` 참조.
